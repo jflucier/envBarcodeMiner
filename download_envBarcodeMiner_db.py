@@ -36,9 +36,14 @@ def download_ncbi_nt_files(json_url, download_dir, max_concurrent=4):
             os.makedirs(download_dir)
 
         if "files" in data and isinstance(data["files"], list):
+            print("Preparing for NCBI NT download. This might take some time...")
             file_urls = []
             total_size = 0
+            file_size_counter = 0
+            total_files = len(data["files"])
             for file_info in data["files"]:
+                file_size_counter += 1
+                print(f"{file_size_counter}/{total_files}: fetching size of {file_info}")
                 if isinstance(file_info, dict) and "url" in file_info:
                     file_url = file_info["url"]
                 elif isinstance(file_info, str):
