@@ -1,9 +1,21 @@
-# setup environment
+# on ip34
 ml StdEnv/2023 python/3.11.5
-virtualenv --no-download /fast/def-ilafores/envBarcodeMiner/venv
+#virtualenv --no-download /fast/def-ilafores/envBarcodeMiner/venv
 source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
-pip install requests
-pip install tqdm
+#pip install requests
+#pip install tqdm
+
+# download db
+python download_envBarcodeMiner_db.py
+
+
+## on mp2b
+ml StdEnv/2020 python/3.10.2
+cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
+#virtualenv --no-download /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv
+source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
+#pip install requests
+#pip install tqdm
 
 # download db
 python download_envBarcodeMiner_db.py
