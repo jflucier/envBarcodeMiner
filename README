@@ -6,7 +6,7 @@ source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
 #pip install tqdm
 
 # download db
-python download_envBarcodeMiner_db.py
+python download_envBarcodeMiner_db.single.py
 
 
 ## on mp2b
