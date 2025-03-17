@@ -18,4 +18,11 @@ source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
 #pip install tqdm
 
 # download db
-python download_envBarcodeMiner_db.py
+python download_envBarcodeMiner_db.single.py
+
+# build container
+cd /home/jflucier/projects/def-ilafores/envBarcodeMiner/containers
+module load apptainer/1.3.5
+singularity build --force --fakeroot dicey.sif dicey.jfl.def
+cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
+

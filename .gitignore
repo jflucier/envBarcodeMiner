@@ -1,1 +1,4 @@
 db/
+*.sif
+*.old
+*.bak
