@@ -91,5 +91,5 @@ def download_ncbi_nt_files(json_url, download_dir, max_concurrent=4):
 # Example usage:
 json_url = "https://ftp.ncbi.nlm.nih.gov/blast/db/core_nt-nucl-metadata.json"
 script_directory = os.path.dirname(os.path.abspath(__file__))
-download_directory = os.path.join(script_directory, "database")
+download_directory = os.path.join(script_directory, "db")
 download_ncbi_nt_files(json_url, download_directory, max_concurrent=4)
