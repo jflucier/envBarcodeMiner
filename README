@@ -6,23 +6,32 @@ source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
 #pip install tqdm
 
 # download db
+cd /fast/def-ilafores/envBarcodeMiner/
 python download_envBarcodeMiner_db.single.py
-
+cd db
+for f in *.tar.gz
+do
+    echo "extracting $f"
+    tar -xvzf $f
+done
+module load blast+
+blastdbcmd -entry all -db core_nt -out core_nt.fa
 
 ## on mp2b
-ml StdEnv/2020 python/3.10.2
-cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
+#ml StdEnv/2020 python/3.10.2
+#cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
 #virtualenv --no-download /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv
-source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
+#source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
 #pip install requests
 #pip install tqdm
-
 # download db
-python download_envBarcodeMiner_db.single.py
+#python download_envBarcodeMiner_db.single.py
 
 # build container
-cd /home/jflucier/projects/def-ilafores/envBarcodeMiner/containers
+cd /fast/def-ilafores/envBarcodeMiner/containers
 module load apptainer/1.3.5
 singularity build --force --fakeroot dicey.sif dicey.jfl.def
-cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
+cd ..
+
+
 
