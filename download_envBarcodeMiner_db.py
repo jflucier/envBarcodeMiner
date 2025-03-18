@@ -23,6 +23,20 @@ def verify_downloaded_file(local_filepath, md5_url):
     """Checks if a file is already downloaded and its integrity is valid."""
     print(f"Integrity check for {local_filepath}")
     local_md5_filepath = f"{local_filepath}.md5"
+
+    if not os.path.exists(local_md5_filepath):
+        print(f"Downloading MD5 checksum for {md5_url}")
+        try:
+            urllib.request.urlretrieve(md5_url, local_md5_filepath)
+
+        except urllib.error.URLError as e:
+            print(f"Warning: Could not download MD5 checksum for {filename}: {e}")
+        except FileNotFoundError:
+            print(f"Warning: MD5 checksum file not found for {filename} at {md5_url}")
+        except Exception as e:
+            print(f"Error processing MD5 checksum for {filename}: {e}")
+
+
     if os.path.exists(local_filepath) and os.path.exists(local_md5_filepath):
         try:
             with open(local_md5_filepath, 'r') as md5_file:
@@ -44,10 +58,12 @@ def verify_downloaded_file(local_filepath, md5_url):
     return False
 
 def is_extracted(tar_gz_filepath):
-    """Checks if a tar.gz file has already been extracted by looking for a specific file inside."""
+    """Checks if a tar.gz file has already been extracted by looking for a specific file in the same directory."""
     print(f"Check if tar is already extracted: {tar_gz_filepath}")
-    extract_dir = os.path.splitext(tar_gz_filepath)[0]
-    expected_extracted_file = os.path.join(extract_dir, os.path.basename(extract_dir) + ".nin")
+    base_name_without_gz = os.path.splitext(os.path.basename(tar_gz_filepath))[0] # core_nt.00.tar
+    extracted_file_base = os.path.splitext(base_name_without_gz)[0]          # core_nt.00
+    extract_dir = os.path.dirname(tar_gz_filepath)                           # /path/to/db/
+    expected_extracted_file = os.path.join(extract_dir, extracted_file_base + ".nin")
     return os.path.exists(expected_extracted_file)
 
 def extract_tar_gz(filepath):
@@ -116,26 +132,10 @@ def download_ncbi_nt_files(json_url, download_dir):
                                 pbar.update(len(buffer))
 
                     print(f"Downloaded: {filename}")
-
-                    print(f"Downloading MD5 checksum for {filename}")
-                    try:
-                        urllib.request.urlretrieve(md5_url, local_md5_filepath)
-                        print(f"Downloaded MD5 checksum for {filename}")
-
-                        with open(local_md5_filepath, 'r') as md5_file:
-                            expected_md5 = md5_file.read().strip().split()[0]  # Extract MD5 from the file
-
-                        # calculated_md5 = calculate_md5(local_filepath)
-                        if verify_downloaded_file(local_filepath, md5_url):
-                            if local_filepath.endswith(".tar.gz"):
-                                extract_tar_gz(local_filepath)
-
-                    except urllib.error.URLError as e:
-                        print(f"Warning: Could not download MD5 checksum for {filename}: {e}")
-                    except FileNotFoundError:
-                        print(f"Warning: MD5 checksum file not found for {filename} at {md5_url}")
-                    except Exception as e:
-                        print(f"Error processing MD5 checksum for {filename}: {e}")
+                    # calculated_md5 = calculate_md5(local_filepath)
+                    if verify_downloaded_file(local_filepath, md5_url):
+                        if local_filepath.endswith(".tar.gz"):
+                            extract_tar_gz(local_filepath)
 
                 except urllib.error.URLError as e:
                     print(f"Error downloading {filename}: {e}")
