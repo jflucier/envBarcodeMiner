@@ -1,4 +1,4 @@
-# Build image
+# Build image: singularity build --force --fakeroot envBarcodeMiner.sif envBarcodeMiner.def
 BootStrap: docker
 From: ubuntu:22.04
 
@@ -13,9 +13,17 @@ From: ubuntu:22.04
 	libboost-program-options-dev libboost-system-dev \
 	libboost-filesystem-dev libboost-iostreams-dev \
 	libbz2-dev libhdf5-dev libncurses-dev liblzma-dev \
-	zlib1g-dev libdeflate-dev python3
+	zlib1g-dev libdeflate-dev python3 python3-pip ncbi-blast+ \
+	samtools seqkit
+
 	apt-get clean
 	rm -rf /var/lib/apt/lists/*
+
+  pip3 install requests
+  pip3 install tqdm
+  pip3 install bgzip
+
+	# install dicey
 	cd /opt
 	git clone --recursive https://github.com/gear-genomics/dicey.git
 	cd /opt/dicey/

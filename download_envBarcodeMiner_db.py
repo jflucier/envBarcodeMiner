@@ -1,3 +1,4 @@
+import argparse
 import json
 import tarfile
 
@@ -151,8 +152,15 @@ def download_ncbi_nt_files(json_url, download_dir):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-# Example usage:
-json_url = "https://ftp.ncbi.nlm.nih.gov/blast/db/core_nt-nucl-metadata.json"
-script_directory = os.path.dirname(os.path.abspath(__file__))
-download_directory = os.path.join(script_directory, "db")
-download_ncbi_nt_files(json_url, download_directory)
+if __name__ == "__main__":
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+    parser = argparse.ArgumentParser(description="Download and process NCBI nucleotide database files.")
+    parser.add_argument(
+        "download_directory",
+        help="The directory to download the files to.",
+        default=os.path.join(script_directory, "db")
+    )
+    args = parser.parse_args()
+
+    json_url = "https://ftp.ncbi.nlm.nih.gov/blast/db/core_nt-nucl-metadata.json"
+    download_ncbi_nt_files(json_url, args.download_directory)

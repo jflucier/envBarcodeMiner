@@ -1,37 +1,80 @@
-# on ip34
-ml StdEnv/2023 python/3.11.5
-#virtualenv --no-download /fast/def-ilafores/envBarcodeMiner/venv
-source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
-#pip install requests
-#pip install tqdm
+### setup envBarcodeMiner ###
+# you need apptainer (https://apptainer.org/)
+# on ip34: ml StdEnv/2023 apptainer/1.3.5
+export INSTALLATION_PATH=/net/nfs-ip34/fast/def-ilafores/
+export ENVBARCODEMINER_PATH=${INSTALLATION_PATH}/envBarcodeMiner
+cd ${INSTALLATION_PATH}
+git clone git@github.com:jflucier/envBarcodeMiner.git
 
-# download db
-cd /fast/def-ilafores/envBarcodeMiner/
-python download_envBarcodeMiner_db.single.py
-cd db
-for f in *.tar.gz
-do
-    echo "extracting $f"
-    tar -xvzf $f
-done
-module load blast+
-blastdbcmd -entry all -db core_nt -out core_nt.fa
+cd {ENVBARCODEMINER_PATH}
+# setup db
+sh install_db.sh
 
-## on mp2b
-#ml StdEnv/2020 python/3.10.2
-#cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
-#virtualenv --no-download /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv
-#source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
-#pip install requests
-#pip install tqdm
-# download db
-#python download_envBarcodeMiner_db.single.py
 
-# build container
-cd /fast/def-ilafores/envBarcodeMiner/containers
-module load apptainer/1.3.5
-singularity build --force --fakeroot dicey.sif dicey.jfl.def
-cd ..
+### analysis example ###
+export ANALYSIS_PATH=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test
+cd ${ANALYSIS_PATH}
+# put primers.fa fasta in analysis path
+
+# run dicey on all fasta
+mkdir -p $ANALYSIS_PATH/dicey
+job_nbr=$(ls ${ENVBARCODEMINER_PATH}/db/split/* | wc -l)
+sbatch --array=1-${job_nbr}%30 \
+--export="FA_DB=${ENVBARCODEMINER_PATH}/db/split" \
+--export="FA_PRIMER=${ANALYSIS_PATH}/primers.fa" \
+--export="OUTPATH=${ANALYSIS_PATH}/dicey" \
+--export="DICEY_CONTAINER=${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif" \
+--export="ANALYSIS_PATH=${ANALYSIS_PATH}" \
+-D /nfs3_ib/nfs-ip34/home/def-ilafores/analysis/20240125_trnL_db/dicey \
+-o /nfs3_ib/nfs-ip34/home/def-ilafores/analysis/20240125_trnL_db/dicey/logs/dicey-%A_%a.slurm.out \
+--time=24:00:00 --mem=15G -N 1 -n 12 -A def-ilafores -J dicey --mail-type=END,FAIL
+${ENVBARCODEMINER_PATH}/submit_dicey.sh
 
 
 
+#
+#
+##bgzip --threads 8 db/envBarcodeMiner.core_nt.fa
+##
+##singularity exec --writable-tmpfs -e \
+##-B $PWD:$PWD \
+##containers/envBarcodeMiner.sif \
+##/opt/dicey/bin/dicey index -o $PWD/db/envBarcodeMiner.core_nt.fa.fm9 $PWD/db/envBarcodeMiner.core_nt.fa.gz
+##
+##singularity exec --writable-tmpfs -e \
+##-B $PWD:$PWD \
+##containers/envBarcodeMiner.sif \
+##samtools faidx $PWD/db/envBarcodeMiner.core_nt.fa.gz
+#
+#
+##virtualenv --no-download /fast/def-ilafores/envBarcodeMiner/venv
+#source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
+##pip install requests
+##pip install tqdm
+##
+#
+## download db
+#cd /fast/def-ilafores/envBarcodeMiner/
+#python download_envBarcodeMiner_db.py
+#module load blast+
+#blastdbcmd -entry all -db core_nt -out core_nt.fa
+#
+### on mp2b
+##ml StdEnv/2020 python/3.10.2
+##cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
+##virtualenv --no-download /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv
+##source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
+##pip install requests
+##pip install tqdm
+## download db
+##python download_envBarcodeMiner_db.py
+#
+## build container
+#cd /fast/def-ilafores/envBarcodeMiner/containers
+#module load apptainer/1.3.5
+#singularity build --force --fakeroot dicey.sif dicey.jfl.def
+#cd ..
+#
+#
+#
+#
