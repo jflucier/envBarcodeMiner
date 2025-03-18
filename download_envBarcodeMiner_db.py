@@ -1,4 +1,6 @@
 import json
+import tarfile
+
 import requests
 import os
 import urllib.request
@@ -8,6 +10,7 @@ import hashlib
 
 def calculate_md5(filepath):
     """Calculates the MD5 checksum of a file."""
+    print(f"Calculating MD5 for {filepath}")
     hasher = hashlib.md5()
     with open(filepath, 'rb') as afile:
         buf = afile.read(8192)
@@ -18,6 +21,7 @@ def calculate_md5(filepath):
 
 def verify_downloaded_file(local_filepath, md5_url):
     """Checks if a file is already downloaded and its integrity is valid."""
+    print(f"Integrity check for {local_filepath}")
     local_md5_filepath = f"{local_filepath}.md5"
     if os.path.exists(local_filepath) and os.path.exists(local_md5_filepath):
         try:
@@ -25,19 +29,42 @@ def verify_downloaded_file(local_filepath, md5_url):
                 expected_md5 = md5_file.read().strip().split()[0]
             calculated_md5 = calculate_md5(local_filepath)
             if calculated_md5 == expected_md5:
-                print(f"File already downloaded and integrity check passed: {os.path.basename(local_filepath)}")
+                print(f"File downloaded and integrity check passed: {os.path.basename(local_filepath)}")
                 return True
             else:
-                print(f"File already exists but integrity check failed: {os.path.basename(local_filepath)}")
+                print(f"File exists but integrity check failed: {os.path.basename(local_filepath)}")
                 os.remove(local_filepath)
                 os.remove(local_md5_filepath)
                 return False
         except FileNotFoundError:
             return False
         except Exception as e:
-            print(f"Error verifying existing file {os.path.basename(local_filepath)}: {e}")
+            print(f"Error verifying file {os.path.basename(local_filepath)}: {e}")
             return False
     return False
+
+def is_extracted(tar_gz_filepath):
+    """Checks if a tar.gz file has already been extracted by looking for a specific file inside."""
+    print(f"Check if tar is already extracted: {tar_gz_filepath}")
+    extract_dir = os.path.splitext(tar_gz_filepath)[0]
+    expected_extracted_file = os.path.join(extract_dir, os.path.basename(extract_dir) + ".nin")
+    return os.path.exists(expected_extracted_file)
+
+def extract_tar_gz(filepath):
+    """Extracts a .tar.gz file to the same directory as the file."""
+    print(f"Extracting: {filepath}")
+    extract_dir = os.path.dirname(filepath)
+    try:
+        if not os.path.exists(extract_dir):
+            os.makedirs(extract_dir)
+        with tarfile.open(filepath, 'r:gz') as tar:
+            tar.extractall(path=extract_dir)
+        print(f"Successfully extracted: {filepath} to {extract_dir}")
+        # os.remove(filepath)  # Remove the tar.gz file after extraction
+    except tarfile.ReadError as e:
+        print(f"Error reading tar.gz file {filepath}: {e}")
+    except Exception as e:
+        print(f"An error occurred during extraction of {filepath}: {e}")
 
 def download_ncbi_nt_files(json_url, download_dir):
     """
@@ -67,7 +94,12 @@ def download_ncbi_nt_files(json_url, download_dir):
                 md5_url = f"{file_url}.md5"
 
                 if verify_downloaded_file(local_filepath, md5_url):
-                    continue  # Skip downloading if already verified
+                    if local_filepath.endswith(".tar.gz"):
+                        if is_extracted(local_filepath):
+                            print(f"Extraction already verified for: {local_filepath}")
+                        else:
+                            extract_tar_gz(local_filepath)
+                    continue  # Skip further processing if already verified and potentially extracted
 
                 local_md5_filepath = f"{local_filepath}.md5"
                 print(f"Downloading: {filename}")
@@ -93,15 +125,10 @@ def download_ncbi_nt_files(json_url, download_dir):
                         with open(local_md5_filepath, 'r') as md5_file:
                             expected_md5 = md5_file.read().strip().split()[0]  # Extract MD5 from the file
 
-                        calculated_md5 = calculate_md5(local_filepath)
-
-                        if calculated_md5 == expected_md5:
-                            print(f"Integrity check passed for {filename}. MD5 checksum matches.")
-                            # os.remove(local_md5_filepath)  # Clean up the MD5 file
-                        else:
-                            print(f"Integrity check failed for {filename}!")
-                            print(f"  Expected MD5: {expected_md5}")
-                            print(f"  Calculated MD5: {calculated_md5}")
+                        # calculated_md5 = calculate_md5(local_filepath)
+                        if verify_downloaded_file(local_filepath, md5_url):
+                            if local_filepath.endswith(".tar.gz"):
+                                extract_tar_gz(local_filepath)
 
                     except urllib.error.URLError as e:
                         print(f"Warning: Could not download MD5 checksum for {filename}: {e}")
@@ -110,9 +137,10 @@ def download_ncbi_nt_files(json_url, download_dir):
                     except Exception as e:
                         print(f"Error processing MD5 checksum for {filename}: {e}")
 
-
-                except Exception as e:
+                except urllib.error.URLError as e:
                     print(f"Error downloading {filename}: {e}")
+                except Exception as e:
+                    print(f"An unexpected error occurred during download of {filename}: {e}")
         else:
             print("Warning: 'files' key not found or is not a list in the JSON.")
 
