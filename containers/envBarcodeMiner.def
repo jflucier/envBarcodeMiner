@@ -12,9 +12,7 @@ From: ubuntu:22.04
 	apt-get -y update
 	apt-get install -y \
 	autoconf build-essential cmake g++ gfortran git \
-	libcurl4-gnutls-dev hdf5-tools libboost-date-time-dev \
-	libboost-program-options-dev libboost-system-dev \
-	libboost-filesystem-dev libboost-iostreams-dev \
+	libcurl4-gnutls-dev hdf5-tools libboost-all-dev \
 	libbz2-dev libhdf5-dev libncurses-dev liblzma-dev libsdsl-dev \
 	zlib1g-dev libdeflate-dev python3 python3-pip ncbi-blast+ \
 	samtools seqkit
