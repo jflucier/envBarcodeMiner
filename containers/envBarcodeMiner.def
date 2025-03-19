@@ -1,4 +1,7 @@
 # Build image: singularity build --force --fakeroot envBarcodeMiner.sif envBarcodeMiner.def
+# on mp2b:
+# ml apptainer
+# env -i PATH=/usr/bin:/bin /cvmfs/soft.computecanada.ca/easybuild/software/2020/Core/apptainer/1.2.4/bin/singularity build --force --fakeroot envBarcodeMiner.mp2.sif envBarcodeMiner.def
 BootStrap: docker
 From: ubuntu:22.04
 
@@ -12,7 +15,7 @@ From: ubuntu:22.04
 	libcurl4-gnutls-dev hdf5-tools libboost-date-time-dev \
 	libboost-program-options-dev libboost-system-dev \
 	libboost-filesystem-dev libboost-iostreams-dev \
-	libbz2-dev libhdf5-dev libncurses-dev liblzma-dev \
+	libbz2-dev libhdf5-dev libncurses-dev liblzma-dev libsdsl-dev \
 	zlib1g-dev libdeflate-dev python3 python3-pip ncbi-blast+ \
 	samtools seqkit
 
@@ -27,7 +30,7 @@ From: ubuntu:22.04
 	cd /opt
 	git clone --recursive https://github.com/gear-genomics/dicey.git
 	cd /opt/dicey/
-	make STATIC=1 all
-	make install
+	make -j 4 STATIC=1 all
+	make -j 4 install
 
 
