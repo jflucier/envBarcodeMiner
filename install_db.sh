@@ -56,25 +56,27 @@ mkdir -p ${db}
 echo "Downloading core_nt db from NCBI (this might take a while...). Requires 500GB of disk space."
 python download_envBarcodeMiner_db.py db=${db}
 
-echo "Generating envBarcodeMiner.core_nt.fa using downloaded NCBI core_nt files"
+echo "Generating envBarcodeMiner.core_nt.fa (this might take a while... again!). Requires another 1TB of disk space"
 singularity exec --writable-tmpfs -e \
 -B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
 ${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
 blastdbcmd -entry all -db ${ENVBARCODEMINER_PATH}/db/core_nt -out ${ENVBARCODEMINER_PATH}/db/envBarcodeMiner.core_nt.fa
 
+echo "Splitting up envBarcodeMiner.core_nt.fa into parts"
+mkdir -p ${db}/fa_split
+singularity exec --writable-tmpfs -e \
+-B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
+${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
+seqkit split --threads 8 --by-size 125000 \
+--out-dir ${ENVBARCODEMINER_PATH}/db/fa_split \
+${ENVBARCODEMINER_PATH}/db/envBarcodeMiner.core_nt.fa
+
+TOTAL_FA=$(ls ${ENVBARCODEMINER_PATH}/db/fa_split/* | wc -l)
+echo "Generated a total of ${TOTAL_FA} fasta for dicey search"
+
 if [ "$clean" != "false" ]; then
   echo "cleaning up downloaded NCBI files"
   rm ${db}/*.tar.gz* ${db}/core_nt*
 fi
-
-echo "Splitting up envBarcodeMiner.core_nt.fa for SLURM job submittion"
-mkdir ${db}/split
-singularity exec --writable-tmpfs -e \
--B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
-${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
-seqkit split --threads 8 --by-size 125000 --by-size-prefix envBarcodeMiner.core_nt --out-dir ${db}/split ${db}/envBarcodeMiner.core_nt.fa
-
-TOTAL_FA=$(ls ${db}/split/* | wc -l)
-echo "Generated a total of ${TOTAL_FA} fasta for dicey search"
 
 echo "DB installation done!"

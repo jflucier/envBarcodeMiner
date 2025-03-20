@@ -3,8 +3,6 @@
 set -e
 
 ml apptainer
-#export DB=env_nt
-echo "DB is ${DB}"
 echo "FA path is ${FA_DB}"
 export FA_PATH=$(ls ${FA_DB}/*.fa | awk "NR==$SLURM_ARRAY_TASK_ID")
 #export out=${OUTPATH}
