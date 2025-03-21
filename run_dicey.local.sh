@@ -119,7 +119,7 @@ for ((i=1; i<=job_nbr; i++)); do
   singularity exec --writable-tmpfs -e \
   -B ${tmp}:${tmp} \
   ${DICEY_SIF} \
-  bgzip --threads ${threads} ${tmp}/${FA}
+  bgzip --force --threads ${threads} ${tmp}/${FA}
 
   echo "indexing genome with dicey for $FA"
   singularity exec --writable-tmpfs -e \
