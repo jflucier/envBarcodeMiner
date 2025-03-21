@@ -143,7 +143,7 @@ for ((i=1; i<=job_nbr; i++)); do
   -i ${tmp}/primer3_config/ \
   -o ${tmp}/${FA}.json.gz \
   -g ${tmp}/${FA}.gz \
-  ${tmp}/${PRIMERS}
+  ${tmp}/primers.fa
 
   echo "convert json to tsv for $FA"
   singularity exec --writable-tmpfs -e \
