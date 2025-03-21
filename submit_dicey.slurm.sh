@@ -7,13 +7,28 @@ echo "FA path is ${FA_DB}"
 export FA_PATH=$(ls ${FA_DB}/*.fa | awk "NR==$SLURM_ARRAY_TASK_ID")
 #export out=${OUTPATH}
 
-echo "copying NT db fasta part ${fa} to compute node"
-cp ${FA_PATH} ${SLURM_TMPDIR}/
+echo "copying NT db fasta part ${FA_PATH} to compute node"
+if [[ ! -e "${SLURM_TMPDIR}/$(basename ${FA_PATH})" ]]; then
+  cp "${FA_PATH}" "${SLURM_TMPDIR}/"
+else
+  echo "${FA_PATH} already exists in ${SLURM_TMPDIR}/"
+fi
+
 echo "copying primer definition to compute node"
-cp ${FA_PRIMER} ${SLURM_TMPDIR}/
-export PRIMERS=$(basename ${FA_PRIMER})
-cp ${DICEY_CONTAINER} ${SLURM_TMPDIR}/
-export DICEY_SIF=$(basename ${DICEY_CONTAINER})
+if [[ ! -e "${SLURM_TMPDIR}/$(basename ${FA_PRIMER})" ]]; then
+  cp "${FA_PRIMER}" "${SLURM_TMPDIR}/"
+else
+  echo "${FA_PRIMER} already exists in ${SLURM_TMPDIR}/"
+fi
+export PRIMERS=$(basename "${FA_PRIMER}")
+
+echo "copying singularity container to compute node"
+if [[ ! -e "${SLURM_TMPDIR}/$(basename ${DICEY_CONTAINER})" ]]; then
+  cp "${DICEY_CONTAINER}" "${SLURM_TMPDIR}/"
+else
+  echo "${DICEY_CONTAINER} already exists in ${SLURM_TMPDIR}/"
+fi
+export DICEY_SIF=$(basename "${DICEY_CONTAINER}")
 
 echo "copying primer3 configs from container to ${SLURM_TMPDIR}"
 singularity exec --writable-tmpfs -e \

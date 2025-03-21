@@ -20,14 +20,12 @@ cd ${ANALYSIS_PATH}
 mkdir -p $ANALYSIS_PATH/dicey/logs
 job_nbr=$(ls ${ENVBARCODEMINER_PATH}/db/fa_split/* | wc -l)
 export FA_DB=${ENVBARCODEMINER_PATH}/db/fa_split
+export DICEY_CONTAINER=${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif
 export FA_PRIMER=${ANALYSIS_PATH}/primers.fa
 export OUTPATH=${ANALYSIS_PATH}/dicey
-export DICEY_CONTAINER=${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif
-export ANALYSIS_PATH=${ANALYSIS_PATH}
 
+### if you have access to slurm ###
 sbatch --array=1-${job_nbr}%30 \
-
-sbatch --array=1 \
 -D ${ANALYSIS_PATH} \
 -o ${ANALYSIS_PATH}/dicey/logs/dicey-%A_%a.slurm.out \
 --time=24:00:00 --mem=15G -N 1 -n 12 -A def-ilafores -J dicey --mail-type=END,FAIL \
@@ -38,64 +36,18 @@ ${ENVBARCODEMINER_PATH}/submit_dicey.sh \
 --export="DICEY_CONTAINER" \
 --export="ANALYSIS_PATH"
 
-
-sbatch --array=1-${job_nbr}%30 \
--D /net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test \
--o /net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test/dicey/logs/dicey-%A_%a.slurm.out \
---time=24:00:00 --mem=15G -N 1 -n 12 -A def-ilafores -J dicey --mail-type=END,FAIL \
-/nfs3_ib/nfs-ip34/fast/def-ilafores/envBarcodeMiner/submit_dicey.sh \
---export="FA_DB=/nfs3_ib/nfs-ip34/fast/def-ilafores/envBarcodeMiner/db/split" \
---export="FA_PRIMER=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test/primers.fa" \
---export="OUTPATH=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test/dicey" \
---export="DICEY_CONTAINER=/nfs3_ib/nfs-ip34/fast/def-ilafores/envBarcodeMiner/containers/envBarcodeMiner.sif" \
---export="ANALYSIS_PATH=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test" \
+### Run this if you dont have slurm ####
+ml apptainer
+sh /home/jflucier/Documents/service/biologie/laforest-lapointe/programs/envBarcodeMiner/run_dicey.local.sh
 
 
+export SLURM_TMPDIR=/fast_tmp/dicey
+for ((i=1; i<=job_nbr; i++)); do
+  echo "running $i / ${job_nbr}"
+  export SLURM_ARRAY_TASK_ID=${i}
+  sh ${ENVBARCODEMINER_PATH}/submit_dicey.sh
+  rm -fr /fast_tmp/dicey/*
+done
 
 
-#
-#
-##bgzip --threads 8 db/envBarcodeMiner.core_nt.fa
-##
-##singularity exec --writable-tmpfs -e \
-##-B $PWD:$PWD \
-##containers/envBarcodeMiner.sif \
-##/opt/dicey/bin/dicey index -o $PWD/db/envBarcodeMiner.core_nt.fa.fm9 $PWD/db/envBarcodeMiner.core_nt.fa.gz
-##
-##singularity exec --writable-tmpfs -e \
-##-B $PWD:$PWD \
-##containers/envBarcodeMiner.sif \
-##samtools faidx $PWD/db/envBarcodeMiner.core_nt.fa.gz
-#
-#
-##virtualenv --no-download /fast/def-ilafores/envBarcodeMiner/venv
-#source /fast/def-ilafores/envBarcodeMiner/venv/bin/activate
-##pip install requests
-##pip install tqdm
-##
-#
-## download db
-#cd /fast/def-ilafores/envBarcodeMiner/
-#python download_envBarcodeMiner_db.py
-#module load blast+
-#blastdbcmd -entry all -db core_nt -out core_nt.fa
-#
-### on mp2b
-##ml StdEnv/2020 python/3.10.2
-##cd /home/jflucier/projects/def-ilafores/envBarcodeMiner
-##virtualenv --no-download /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv
-##source /home/jflucier/projects/def-ilafores/envBarcodeMiner/venv/bin/activate
-##pip install requests
-##pip install tqdm
-## download db
-##python download_envBarcodeMiner_db.py
-#
-## build container
-#cd /fast/def-ilafores/envBarcodeMiner/containers
-#module load apptainer/1.3.5
-#singularity build --force --fakeroot dicey.sif dicey.jfl.def
-#cd ..
-#
-#
-#
-#
+
