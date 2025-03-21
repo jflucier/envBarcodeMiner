@@ -110,57 +110,57 @@ job_nbr=$(ls ${fa_list}/* | wc -l)
 for ((i=1; i<=job_nbr; i++)); do
   echo "running ${fa_path} (${i} / ${job_nbr})"
 
-#  fa_path=$(ls ${fa_list}/* | awk "NR==${i}")
-#  echo "copying fasta ${fa_path} to temp folder"
-#  cp "${fa_path}" "${tmp}/"
-#
-#  FA=$(basename ${fa_path})
-#  echo "zipping genome with bgzip for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  bgzip --threads ${threads} ${tmp}/${FA}
-#
-#  echo "indexing genome with dicey for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -H ${tmp} \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  dicey index -o ${tmp}/${FA}.fm9 ${tmp}/${FA}.gz
-#
-#  echo "indexing genome with samtools for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  samtools faidx ${tmp}/${FA}.gz
-#
-#  echo "running dicey search for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -H ${tmp} \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  /opt/dicey/bin/dicey search \
-#  -i ${tmp}/primer3_config/ \
-#  -o ${tmp}/${FA}.json.gz \
-#  -g ${tmp}/${FA}.gz \
-#  ${tmp}/${PRIMERS}
-#
-#  echo "convert json to tsv for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -H ${tmp} \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  python3 /opt/dicey/scripts/json2tsv.py \
-#  -m amplicon \
-#  -j ${tmp}/${FA}.json.gz > ${tmp}/${FA}.tsv
-#
-#  echo "copying results to ${OUTPATH}"
-#  mkdir -p ${OUTPATH}
-#  cp ${tmp}/${FA}.tsv ${OUTPATH}/
-#  cp ${tmp}/${FA}.json.gz ${OUTPATH}/
-#
-#  echo "cleaning up temp"
-#  rm ${tmp}/${FA}*
+  fa_path=$(ls ${fa_list}/* | awk "NR==${i}")
+  echo "copying fasta ${fa_path} to temp folder"
+  cp "${fa_path}" "${tmp}/"
+
+  FA=$(basename ${fa_path})
+  echo "zipping genome with bgzip for $FA"
+  singularity exec --writable-tmpfs -e \
+  -B ${tmp}:${tmp} \
+  ${DICEY_SIF} \
+  bgzip --threads ${threads} ${tmp}/${FA}
+
+  echo "indexing genome with dicey for $FA"
+  singularity exec --writable-tmpfs -e \
+  -H ${tmp} \
+  -B ${tmp}:${tmp} \
+  ${DICEY_SIF} \
+  dicey index -o ${tmp}/${FA}.fm9 ${tmp}/${FA}.gz
+
+  echo "indexing genome with samtools for $FA"
+  singularity exec --writable-tmpfs -e \
+  -B ${tmp}:${tmp} \
+  ${DICEY_SIF} \
+  samtools faidx ${tmp}/${FA}.gz
+
+  echo "running dicey search for $FA"
+  singularity exec --writable-tmpfs -e \
+  -H ${tmp} \
+  -B ${tmp}:${tmp} \
+  ${DICEY_SIF} \
+  /opt/dicey/bin/dicey search \
+  -i ${tmp}/primer3_config/ \
+  -o ${tmp}/${FA}.json.gz \
+  -g ${tmp}/${FA}.gz \
+  ${tmp}/${PRIMERS}
+
+  echo "convert json to tsv for $FA"
+  singularity exec --writable-tmpfs -e \
+  -H ${tmp} \
+  -B ${tmp}:${tmp} \
+  ${DICEY_SIF} \
+  python3 /opt/dicey/scripts/json2tsv.py \
+  -m amplicon \
+  -j ${tmp}/${FA}.json.gz > ${tmp}/${FA}.tsv
+
+  echo "copying results to ${OUTPATH}"
+  mkdir -p ${OUTPATH}
+  cp ${tmp}/${FA}.tsv ${OUTPATH}/
+  cp ${tmp}/${FA}.json.gz ${OUTPATH}/
+
+  echo "cleaning up temp"
+  rm ${tmp}/${FA}*
 done
 
 echo "done"
