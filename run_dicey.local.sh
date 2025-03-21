@@ -106,8 +106,8 @@ ${DICEY_SIF} \
 cp -r /opt/dicey/src/primer3_config ${tmp}/
 
 job_nbr=$(ls ${fa_list}/* | wc -l)
+
 for ((i=1; i<=job_nbr; i++)); do
-do
   fa_path=$(ls ${fa_list}/* | awk "NR==${i}")
   echo "running ${fa_path} (${i} / ${job_nbr})"
   echo "copying fasta ${fa_path} to temp folder"
@@ -160,5 +160,6 @@ do
 
   echo "cleaning up temp"
   rm ${tmp}/${FA}*
+done
 
 echo "done"

@@ -29,7 +29,7 @@ sbatch --array=1-${job_nbr}%30 \
 -D ${ANALYSIS_PATH} \
 -o ${ANALYSIS_PATH}/dicey/logs/dicey-%A_%a.slurm.out \
 --time=24:00:00 --mem=15G -N 1 -n 12 -A def-ilafores -J dicey --mail-type=END,FAIL \
-${ENVBARCODEMINER_PATH}/submit_dicey.sh \
+${ENVBARCODEMINER_PATH}/submit_dicey.slurm.sh \
 --export="FA_DB" \
 --export="FA_PRIMER" \
 --export="OUTPATH" \
@@ -38,7 +38,14 @@ ${ENVBARCODEMINER_PATH}/submit_dicey.sh \
 
 ### Run this if you dont have slurm ####
 ml apptainer
-sh /home/jflucier/Documents/service/biologie/laforest-lapointe/programs/envBarcodeMiner/run_dicey.local.sh
+mkdir /fast_tmp/dicey_tmp
+sh ${ENVBARCODEMINER_PATH}/run_dicey.local.sh -t 12 \
+-fa_list ${ENVBARCODEMINER_PATH}/db/fa_split \
+-primer_f CTTGGTCATTTAGAGGAAGTAA \
+-primer_r GCTGCGTTCTTCATCGATGC \
+-o ${OUTPATH} \
+-tmp /fast_tmp/dicey_tmp
+
 
 
 export SLURM_TMPDIR=/fast_tmp/dicey
