@@ -17,7 +17,8 @@ From: ubuntu:22.04
 	libboost-filesystem-dev libboost-iostreams-dev \
 	libbz2-dev libhdf5-dev libncurses-dev liblzma-dev \
 	zlib1g-dev libdeflate-dev python3 python3-pip ncbi-blast+ \
-	samtools seqkit libhts-dev tabix
+	samtools seqkit libhts-dev tabix \
+	perl cpanminus
 
 	apt-get clean
 	rm -rf /var/lib/apt/lists/*
@@ -32,4 +33,13 @@ From: ubuntu:22.04
 	make STATIC=1 all
 	make install
 
-
+  cd /opt
+  git clone https://github.com/lskatz/taxdb.git
+  cpanm -i 'File::Basename'
+  cpanm -i 'Data::Dumper'
+  cpanm -i 'List::Util'
+  cpanm -i 'List::MoreUtils'
+  cpanm -i 'DBI'
+  cpanm -i 'DBD::SQLite'
+  cpanm -i 'Test::More'
+  cpanm -i 'IO::Uncompress::AnyUncompress'
