@@ -14,47 +14,5 @@ sh install_db.sh
 ### analysis example ###
 export ANALYSIS_PATH=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test
 cd ${ANALYSIS_PATH}
-# put primers.fa fasta in analysis path
+sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh
 
-# run dicey on all fasta
-mkdir -p $ANALYSIS_PATH/dicey/logs
-job_nbr=$(ls ${ENVBARCODEMINER_PATH}/db/fa_split/* | wc -l)
-export FA_DB=${ENVBARCODEMINER_PATH}/db/fa_split
-export DICEY_CONTAINER=${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif
-export FA_PRIMER=${ANALYSIS_PATH}/primers.fa
-export OUTPATH=${ANALYSIS_PATH}/dicey
-
-### if you have access to slurm ###
-sbatch --array=1-${job_nbr}%30 \
--D ${ANALYSIS_PATH} \
--o ${ANALYSIS_PATH}/dicey/logs/dicey-%A_%a.slurm.out \
---time=24:00:00 --mem=15G -N 1 -n 12 -A def-ilafores -J dicey --mail-type=END,FAIL \
-${ENVBARCODEMINER_PATH}/submit_dicey.slurm.sh \
---export="FA_DB" \
---export="FA_PRIMER" \
---export="OUTPATH" \
---export="DICEY_CONTAINER" \
---export="ANALYSIS_PATH"
-
-### Run this if you dont have slurm ####
-ml apptainer
-mkdir /fast_tmp/dicey_tmp
-sh ${ENVBARCODEMINER_PATH}/run_dicey.local.sh -t 12 \
--fa_list ${ENVBARCODEMINER_PATH}/db/fa_split \
--primer_f CTTGGTCATTTAGAGGAAGTAA \
--primer_r GCTGCGTTCTTCATCGATGC \
--o ${OUTPATH} \
--tmp /fast_tmp/dicey_tmp
-
-
-
-export SLURM_TMPDIR=/fast_tmp/dicey
-for ((i=1; i<=job_nbr; i++)); do
-  echo "running $i / ${job_nbr}"
-  export SLURM_ARRAY_TASK_ID=${i}
-  sh ${ENVBARCODEMINER_PATH}/submit_dicey.sh
-  rm -fr /fast_tmp/dicey/*
-done
-
-
-2424425
