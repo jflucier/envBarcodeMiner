@@ -184,48 +184,6 @@ else
   echo "Dicey search done sucessfully!"
 fi
 
-
-
-#### single thread method
-#for ((i=1; i<=job_nbr; i++)); do
-#  echo "### running ${fa_path} (${i} / ${job_nbr}) ###"
-#
-#  index_path=$(ls ${fa_list}/*.fm9 | awk "NR==${i}")
-#  fa_path=${index_path%.fm9}
-#  echo "copying dicey index ${fa_path} to temp folder"
-#  cp ${fa_path}* "${tmp}/"
-#
-#  FA=$(basename ${fa_path})
-#
-#  echo "running dicey search on ${FA}"
-#  singularity exec --writable-tmpfs -e \
-#  -H ${tmp} \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  /opt/dicey/bin/dicey search \
-#  -i ${tmp}/primer3_config/ \
-#  -o ${tmp}/${FA}.json.gz \
-#  -g ${tmp}/${FA}.gz \
-#  ${tmp}/primers.fa
-#
-#  echo "convert json to tsv for $FA"
-#  singularity exec --writable-tmpfs -e \
-#  -H ${tmp} \
-#  -B ${tmp}:${tmp} \
-#  ${DICEY_SIF} \
-#  python3 /opt/dicey/scripts/json2tsv.py \
-#  -m amplicon \
-#  -j ${tmp}/${FA}.json.gz > ${tmp}/${FA}.tsv
-#
-#  echo "copying results to ${out}"
-#  mkdir -p ${out}/dicey/part/
-#  cp ${tmp}/${FA}.tsv ${out}/dicey/part/
-#  cp ${tmp}/${FA}.json.gz ${out}/dicey/part/
-#
-#  echo "cleaning up temp"
-#  rm ${tmp}/${FA}*
-#done
-
 echo "combine all dicey results in ${out}/dicey_results.tsv"
 cat ${out}/dicey/part/*.tsv > ${out}/dicey/dicey_results.tsv
 
@@ -312,21 +270,16 @@ processed_taxids=0
 process_taxid() {
   local taxid_to_process="$1"
   local thread_id="$2"
-
-#  echo "Thread $thread_id: Processing taxid $taxid_to_process"
-
   local tmp_taxid=""
   local tmp_id=1
 
   awk -F'\t' -v tid="$taxid_to_process" '$1 == tid' "$input_file" | while IFS=$'\t' read -r taxid acc seq ; do
     if [ "$taxid" = "$tmp_taxid" ]; then
-#      echo "Thread $thread_id: $taxid == $tmp_taxid --> ID=${tmp_id}"
       local lineage_with_id="${lineage}_${tmp_id}"
       # Use printf to avoid issues with special characters in lineage
       printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "$output_file"
     else
       tmp_id=1
-#      echo "Thread $thread_id: $taxid != $tmp_taxid --> ID=${tmp_id}"
       taxon_str=$(
         taxons=$(singularity exec --writable-tmpfs -e \
         -H "${tmp}" -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
@@ -364,9 +317,6 @@ process_taxid() {
     tmp_id=$((tmp_id+1))
   done
 
-#  processed_taxids=$((processed_taxids + 1))
-#  progress=$((processed_taxids * 100 / total_taxids))
-#  printf "Progress: [%-${progress}s] %d%%\r" $(printf "=" %.0s {1..$progress}) $progress
 }
 
 # Initialize output file with header
@@ -389,53 +339,6 @@ done
 wait # Wait for any remaining threads
 
 echo "Processing complete. Results in $output_file"
-
-#### single thread
-#echo -e "taxid\tacc\tlineage\tseq" > ${out}/dicey/hits.lineage.tsv
-#tmp_taxid=""
-#while IFS=$'\t' read -r taxid acc seq ; do
-#  if [ "$taxid" = "$tmp_taxid" ]; then
-#    echo "$taxid == $tmp_taxid --> ID=${tmp_id}"
-#    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
-#  else
-#    tmp_id=1
-#    echo "$taxid != $tmp_taxid --> ID=${tmp_id}"
-#    taxon_str=$(
-#      taxons=$(singularity exec --writable-tmpfs -e \
-#      -H ${tmp} -B ${tmp}:${tmp} -B "${db}:${db}" ${DICEY_SIF} \
-#      perl /opt/taxdb/scripts/taxdb_query.pl --taxon $taxid --mode lineage ${db}/taxonomy_db.sqlite)
-#      for t in $taxons;
-#      do
-#        singularity exec --writable-tmpfs -e \
-#        -H ${tmp} \
-#        -B ${tmp}:${tmp} \
-#        -B "${db}:${db}" \
-#        ${DICEY_SIF} \
-#        perl /opt/taxdb/scripts/taxdb_query.pl --taxon ${t} ${db}/taxonomy_db.sqlite | grep -m 1 "scientific name";
-#      done | \
-#        cut -f 1-3,15,16 | \
-#        grep -P 'kingdom|phylum|class|order|family|genus|species' | \
-#        grep -vP '\tsuper\w+' | \
-#        grep -vP '\tsub\w+' | \
-#        grep -vP '\tno rank' | \
-#        sed "s/'/ /g" | cut -f 4 | perl -ne 'chomp($_); print $_ . ","'
-#    )
-#
-#    lineage=$(
-#    perl -e "
-#    my \$tt = '$taxon_str';
-#    my @t = split(',',\$tt);
-#    my @rv = reverse(@t);
-#    my \$s = join(';',@rv);
-#    print \$s. \";$acc\" . \"\n\";
-#    "
-#    )
-#    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
-#  fi
-#
-#  tmp_taxid=$taxid
-#  tmp_id=$((tmp_id+1))
-#done < ${out}/dicey/hits.taxid.tsv
 
 # split header and reimport to db
 perl -ne '
