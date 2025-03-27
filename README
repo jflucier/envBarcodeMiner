@@ -14,5 +14,8 @@ sh install_db.sh
 ### analysis example ###
 export ANALYSIS_PATH=/net/nfs-ip34/fast/def-ilafores/20250318_envBarcodeMiner_test
 cd ${ANALYSIS_PATH}
-sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh
+
+# show help message
+sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh --h
+
 

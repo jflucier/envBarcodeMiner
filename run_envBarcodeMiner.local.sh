@@ -32,7 +32,7 @@ primer_f="false"
 primer_r="false"
 
 # load in params
-SHORT_OPTS="h:t:o:tmp:primer_f:primer_r:db:"
+SHORT_OPTS="ht:o:tmp:primer_f:primer_r:db:"
 LONG_OPTS='help'
 
 OPTS=$(getopt -o $SHORT_OPTS --long $LONG_OPTS -- "$@")
