@@ -81,10 +81,11 @@ gunzip nucl_wgs.accession2taxid.gz
 
 cd ${ENVBARCODEMINER_PATH}
 echo "### Setting up taxonomy database ###"
+rm -f ${db}/envBarcodeMiner_db.sqlite
 singularity exec --writable-tmpfs -e \
 -B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
 ${CONTAINER} \
-perl /opt/taxdb/scripts/taxdb_create.pl ${db}/envBarcodeMiner_db.sqlite
+perl /opt/taxdb/scripts/taxdb_create.pl ${db}/taxonomy_db.sqlite
 
 echo "### Importing taxonomy to db ###"
 singularity exec --writable-tmpfs -e \
@@ -92,16 +93,18 @@ singularity exec --writable-tmpfs -e \
 ${CONTAINER} \
 perl /opt/taxdb/scripts/taxdb_add.pl ${db}/taxonomy_db.sqlite ${db}/taxonomy
 
+echo "### Importing nucl_gb, nucl_wgs and nucl_wgs.extra to db ###"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_gb.accession2taxid accession2taxid"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_wgs.accession2taxid accession2taxid"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA accession2taxid"
 
+echo "### Indexing taxonomy db ###"
 sqlite3 ${db}/taxonomy_db.sqlite "
 create index NAME_taxid_idx on NAME(tax_id);
 create index NODE_taxid_idx on NODE(tax_id);
 create index accession2taxid_accession_idx on accession2taxid(accession);
 create index accession2taxid_taxid_idx on accession2taxid(taxid);
-create index accession2taxid_accessionversion_idx on accession2taxid(accession.version);
+create index accession2taxid_accessionversion_idx on accession2taxid(\"accession.version\");
 "
 
 echo "### Done setting up taxonomy db ###"

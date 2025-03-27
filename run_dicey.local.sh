@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+trap '' CHLD
 
 help_message () {
 	echo ""
@@ -107,46 +108,123 @@ singularity exec --writable-tmpfs -e \
 ${DICEY_SIF} \
 cp -r /opt/dicey/src/primer3_config ${tmp}/
 
-job_nbr=$(ls ${fa_list}/*.fm9 | wc -l)
+# --- Function to process each FASTA index file ---
+process_index() {
+  local index_path="$1"
+  local thread_id="$2"
 
-for ((i=1; i<=job_nbr; i++)); do
-  echo "### running ${fa_path} (${i} / ${job_nbr}) ###"
+  echo "### Thread $thread_id: running ${index_path} ###"
 
-  index_path=$(ls ${fa_list}/*.fm9 | awk "NR==${i}")
-  fa_path=${index_path%.fm9}
-  echo "copying dicey index ${fa_path} to temp folder"
-  cp "${fa_path}*" "${tmp}/"
+  local fa_path="${index_path%.fm9}"
+  local FA=$(basename "${fa_path}")
 
-  FA=$(basename ${fa_path})
+  cp "${fa_path}"* "${tmp}/"
 
-  echo "running dicey search on ${FA}"
-  singularity exec --writable-tmpfs -e \
-  -H ${tmp} \
-  -B ${tmp}:${tmp} \
-  ${DICEY_SIF} \
-  /opt/dicey/bin/dicey search \
-  -i ${tmp}/primer3_config/ \
-  -o ${tmp}/${FA}.json.gz \
-  -g ${tmp}/${FA}.gz \
-  ${tmp}/primers.fa
+  # Construct the base singularity command with explicit PATH
+  local singularity_cmd="singularity exec --writable-tmpfs -e \
+    -H \"${tmp}\" \
+    -B \"${tmp}:${tmp}\" \
+    --env \"PATH=/opt/dicey/bin:/usr/bin:$PATH\" \
+    \"${DICEY_SIF}\""
 
-  echo "convert json to tsv for $FA"
-  singularity exec --writable-tmpfs -e \
-  -H ${tmp} \
-  -B ${tmp}:${tmp} \
-  ${DICEY_SIF} \
-  python3 /opt/dicey/scripts/json2tsv.py \
-  -m amplicon \
-  -j ${tmp}/${FA}.json.gz > ${tmp}/${FA}.tsv
+  eval "${singularity_cmd} /opt/dicey/bin/dicey search \
+    -i \"${tmp}/primer3_config/\" \
+    -o \"${tmp}/${FA}.json.gz\" \
+    -g \"${tmp}/${FA}.gz\" \
+    \"${tmp}/primers.fa\""
 
-  echo "copying results to ${out}"
-  mkdir -p ${out}/dicey/part/
-  cp ${tmp}/${FA}.tsv ${out}/dicey/part/
-  cp ${tmp}/${FA}.json.gz ${out}/dicey/part/
+  eval "${singularity_cmd} python3 /opt/dicey/scripts/json2tsv.py \
+    -m amplicon \
+    -j \"${tmp}/${FA}.json.gz\" > \"${tmp}/${FA}.tsv\""
 
-  echo "cleaning up temp"
-  rm ${tmp}/${FA}*
+  mkdir -p "${out}/dicey/part/"
+  cp "${tmp}/${FA}.tsv" "${out}/dicey/part/"
+  cp "${tmp}/${FA}.json.gz" "${out}/dicey/part/"
+
+  rm "${tmp}/${FA}"*
+}
+
+TOTAL_INDEX=$(ls ${fa_list}/*.fm9 | wc -l)
+echo "will run dicey search on ${TOTAL_INDEX} indexes using ${threads} threads"
+# --- Get the list of index files ---
+index_files=$(ls "${fa_list}"/*.fm9)
+# --- Loop through index files and run in parallel ---
+counter=0
+for index_path in $index_files; do
+  counter=$((counter + 1))
+  process_index "$index_path" "$counter" &
+  active_processes=$(jobs -r -p | wc -l)
+
+  # Wait if we reach the maximum number of threads
+  while [[ "$active_processes" -ge "$threads" ]]; do
+    sleep 0.1
+    active_processes=$(jobs -r -p | wc -l)
+  done
 done
+
+# --- Wait for all background processes to finish ---
+wait
+
+
+### check if all index runned correctly
+TOTAL_RESULTS=$(ls ${out}/dicey/part/*.tsv | wc -l)
+counter=0
+if [[ "$TOTAL_INDEX" != "$TOTAL_RESULTS" ]]; then
+  echo "### Detected some error in dicey search. Will try rerunning erors: ###"
+  for index_path in $index_files; do
+    index_base=$(basename $index_path)
+    res_file=${fa_path%.fm9}
+    if [[ ! -e "${out}/dicey/part/${res_file}.tsv" ]]; then
+      counter=$((counter + 1))
+      echo "rerunning index ${index_base}"
+      process_index "$index_path" "$counter" &
+    fi
+  done
+else
+  echo "Dicey search done sucessfully!"
+fi
+
+
+
+#### single thread method
+#for ((i=1; i<=job_nbr; i++)); do
+#  echo "### running ${fa_path} (${i} / ${job_nbr}) ###"
+#
+#  index_path=$(ls ${fa_list}/*.fm9 | awk "NR==${i}")
+#  fa_path=${index_path%.fm9}
+#  echo "copying dicey index ${fa_path} to temp folder"
+#  cp ${fa_path}* "${tmp}/"
+#
+#  FA=$(basename ${fa_path})
+#
+#  echo "running dicey search on ${FA}"
+#  singularity exec --writable-tmpfs -e \
+#  -H ${tmp} \
+#  -B ${tmp}:${tmp} \
+#  ${DICEY_SIF} \
+#  /opt/dicey/bin/dicey search \
+#  -i ${tmp}/primer3_config/ \
+#  -o ${tmp}/${FA}.json.gz \
+#  -g ${tmp}/${FA}.gz \
+#  ${tmp}/primers.fa
+#
+#  echo "convert json to tsv for $FA"
+#  singularity exec --writable-tmpfs -e \
+#  -H ${tmp} \
+#  -B ${tmp}:${tmp} \
+#  ${DICEY_SIF} \
+#  python3 /opt/dicey/scripts/json2tsv.py \
+#  -m amplicon \
+#  -j ${tmp}/${FA}.json.gz > ${tmp}/${FA}.tsv
+#
+#  echo "copying results to ${out}"
+#  mkdir -p ${out}/dicey/part/
+#  cp ${tmp}/${FA}.tsv ${out}/dicey/part/
+#  cp ${tmp}/${FA}.json.gz ${out}/dicey/part/
+#
+#  echo "cleaning up temp"
+#  rm ${tmp}/${FA}*
+#done
 
 echo "combine all dicey results in ${out}/dicey_results.tsv"
 cat ${out}/dicey/part/*.tsv > ${out}/dicey/dicey_results.tsv
@@ -168,7 +246,7 @@ else{
 
 echo "Initialise envBarcodeMiner result db with dicey hits"
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-drop table hits;
+drop table if exists hits;
 create table hits (
 Amplicon TEXT,
 Id INTEGER,
@@ -189,19 +267,19 @@ RevSeq TEXT,
 Seq TEXT
 );
 "
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header on' ".import ${out}/dicey/dicey_results.acc.tsv hits"
+sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/dicey/dicey_results.acc.tsv hits"
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-delete from trnL_hits where Chrom='Chrom';
+delete from hits where Chrom='Chrom';
 "
 
 echo "associate taxonomic information to dicey hits"
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-ATTACH DATABASE ${db}/taxonomy_db.sqlite AS taxo;
-drop table hits_taxid;
+ATTACH DATABASE '${db}/taxonomy_db.sqlite' AS taxo;
+drop table if exists hits_taxid;
 create table hits_taxid as
 select
-  h.Chrom || \"_\" || h.Id Id,
+  h.Chrom || '_' || h.Id Id,
   h.Chrom,
   a.taxid,
   h.Seq
@@ -216,56 +294,148 @@ select distinct
    taxid,
    Chrom,
    Seq
-from trnL_hits_taxid
+from hits_taxid
 order by taxid
 ' > ${out}/dicey/hits.taxid.tsv
 
 echo "Generate dicey hits lineage TSV report: hits.lineage.tsv"
-echo -e "taxid\tacc\tlineage\tseq" > ${out}/dicey/hits.lineage.tsv
-tmp_taxid=""
-while IFS=$'\t' read -r taxid acc seq ; do
-  if [ "$taxid" = "$tmp_taxid" ]; then
-    echo "$taxid == $tmp_taxid --> ID=${tmp_id}"
-    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
-  else
-    tmp_id=1
-    echo "$taxid != $tmp_taxid --> ID=${tmp_id}"
-    tmp=$(
-      for t in $(singularity exec --writable-tmpfs -e \
-        -H ${tmp} \
-        -B ${tmp}:${tmp} \
-        ${DICEY_SIF} \
-        perl /opt/taxdb/scripts/taxdb_query.pl --taxon $taxid --mode lineage ${out}/dicey/envBarcodeMiner.results.sqlite);
-      do
-        singularity exec --writable-tmpfs -e \
-        -H ${tmp} \
-        -B ${tmp}:${tmp} \
-        ${DICEY_SIF} \
-        perl /opt/taxdb/scripts/taxdb_query.pl --taxon ${t} ${out}/dicey/envBarcodeMiner.results.sqlite | grep -m 1 "scientific name";
-      done | \
-        cut -f 1-3,15,16 | \
-        grep -P 'kingdom|phylum|class|order|family|genus|species' | \
-        grep -vP '\tsuper\w+' | \
-        grep -vP '\tsub\w+' | \
-        grep -vP '\tno rank' | \
-        sed "s/'/ /g" | cut -f 4 | perl -ne 'chomp($_); print $_ . ","'
-    )
 
-    lineage=$(
-    perl -e "
-    my \$tt = '$tmp';
-    my @t = split(',',\$tt);
-    my @rv = reverse(@t);
-    my \$s = join(';',@rv);
-    print \$s. \";$acc\" . \"\n\";
-    "
-    )
-    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
+input_file="${out}/dicey/hits.taxid.tsv"
+output_file="${out}/dicey/hits.lineage.tsv"
+
+# Get unique taxids
+unique_taxids=$(awk -F'\t' '{print $1}' "$input_file" | sort -u)
+total_taxids=$(echo "$unique_taxids" | wc -l)
+processed_taxids=0
+
+# Function to process a single taxid
+process_taxid() {
+  local taxid_to_process="$1"
+  local thread_id="$2"
+
+#  echo "Thread $thread_id: Processing taxid $taxid_to_process"
+
+  local tmp_taxid=""
+  local tmp_id=1
+
+  awk -F'\t' -v tid="$taxid_to_process" '$1 == tid' "$input_file" | while IFS=$'\t' read -r taxid acc seq ; do
+    if [ "$taxid" = "$tmp_taxid" ]; then
+#      echo "Thread $thread_id: $taxid == $tmp_taxid --> ID=${tmp_id}"
+      local lineage_with_id="${lineage}_${tmp_id}"
+      # Use printf to avoid issues with special characters in lineage
+      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "$output_file"
+    else
+      tmp_id=1
+#      echo "Thread $thread_id: $taxid != $tmp_taxid --> ID=${tmp_id}"
+      taxon_str=$(
+        taxons=$(singularity exec --writable-tmpfs -e \
+        -H "${tmp}" -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
+        perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite")
+        for t in $taxons;
+        do
+          singularity exec --writable-tmpfs -e \
+          -H "${tmp}" \
+          -B "${tmp}:${tmp}" \
+          -B "${db}:${db}" \
+          "${DICEY_SIF}" \
+          perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$t" "${db}/taxonomy_db.sqlite" | grep -m 1 "scientific name";
+        done |
+          cut -f 1-3,15,16 |
+          grep -P 'kingdom|phylum|class|order|family|genus|species' |
+          grep -vP '\tsuper\w+' |
+          grep -vP '\tsub\w+' |
+          grep -vP '\tno rank' |
+          sed "s/'/ /g" | cut -f 4 | perl -ne 'chomp($_); print $_ . ","'
+      )
+
+      lineage=$(
+      perl -e "
+      my \$tt = '$taxon_str';
+      my @t = split(',',\$tt);
+      my @rv = reverse(@t);
+      my \$s = join(';',@rv);
+      print \$s. \";$acc\" . \"\n\";
+      "
+      )
+      local lineage_with_id="${lineage}_${tmp_id}"
+      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "$output_file"
+    fi
+    tmp_taxid="$taxid"
+    tmp_id=$((tmp_id+1))
+  done
+
+#  processed_taxids=$((processed_taxids + 1))
+#  progress=$((processed_taxids * 100 / total_taxids))
+#  printf "Progress: [%-${progress}s] %d%%\r" $(printf "=" %.0s {1..$progress}) $progress
+}
+
+# Initialize output file with header
+echo -e "taxid\tacc\tlineage\tseq" > "$output_file"
+
+# Launch threads to process unique taxids
+thread_id=1
+counter=1
+for tid in $unique_taxids; do
+  echo "Processing ${tid} (${counter} / ${total_taxids})"
+  process_taxid "$tid" "$thread_id" &
+  ((thread_id++))
+  ((counter++))
+  if (( thread_id > threads )); then
+    wait # Wait for all threads to finish before launching more
+    thread_id=1
   fi
+done
 
-  tmp_taxid=$taxid
-  tmp_id=$((tmp_id+1))
-done < ${out}/dicey/hits.taxid.tsv
+wait # Wait for any remaining threads
+
+echo "Processing complete. Results in $output_file"
+
+#### single thread
+#echo -e "taxid\tacc\tlineage\tseq" > ${out}/dicey/hits.lineage.tsv
+#tmp_taxid=""
+#while IFS=$'\t' read -r taxid acc seq ; do
+#  if [ "$taxid" = "$tmp_taxid" ]; then
+#    echo "$taxid == $tmp_taxid --> ID=${tmp_id}"
+#    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
+#  else
+#    tmp_id=1
+#    echo "$taxid != $tmp_taxid --> ID=${tmp_id}"
+#    taxon_str=$(
+#      taxons=$(singularity exec --writable-tmpfs -e \
+#      -H ${tmp} -B ${tmp}:${tmp} -B "${db}:${db}" ${DICEY_SIF} \
+#      perl /opt/taxdb/scripts/taxdb_query.pl --taxon $taxid --mode lineage ${db}/taxonomy_db.sqlite)
+#      for t in $taxons;
+#      do
+#        singularity exec --writable-tmpfs -e \
+#        -H ${tmp} \
+#        -B ${tmp}:${tmp} \
+#        -B "${db}:${db}" \
+#        ${DICEY_SIF} \
+#        perl /opt/taxdb/scripts/taxdb_query.pl --taxon ${t} ${db}/taxonomy_db.sqlite | grep -m 1 "scientific name";
+#      done | \
+#        cut -f 1-3,15,16 | \
+#        grep -P 'kingdom|phylum|class|order|family|genus|species' | \
+#        grep -vP '\tsuper\w+' | \
+#        grep -vP '\tsub\w+' | \
+#        grep -vP '\tno rank' | \
+#        sed "s/'/ /g" | cut -f 4 | perl -ne 'chomp($_); print $_ . ","'
+#    )
+#
+#    lineage=$(
+#    perl -e "
+#    my \$tt = '$taxon_str';
+#    my @t = split(',',\$tt);
+#    my @rv = reverse(@t);
+#    my \$s = join(';',@rv);
+#    print \$s. \";$acc\" . \"\n\";
+#    "
+#    )
+#    echo -e "$taxid\t$acc\t${lineage}_${tmp_id}\t$seq" >> ${out}/dicey/hits.lineage.tsv
+#  fi
+#
+#  tmp_taxid=$taxid
+#  tmp_id=$((tmp_id+1))
+#done < ${out}/dicey/hits.taxid.tsv
 
 # split header and reimport to db
 perl -ne '
@@ -292,7 +462,7 @@ create table hits_lineage (
   seq text
 );
 "
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header on' ".import ${out}/dicey/hits.lineage.split.tsv hits_lineage"
+sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/dicey/hits.lineage.split.tsv hits_lineage"
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header off' '
 select
@@ -305,7 +475,7 @@ select
    group_concat(distinct genus),
    group_concat(distinct species),
    group_concat(distinct t_accesion)
-from trnL_hits_lineage
+from hits_lineage
 group by Seq
 ' > ${out}/hits.lineage.byseq.tsv
 
@@ -349,7 +519,4 @@ if(length($seq) >= 20){
 }
 ' ${out}/hits.lineage.byseq.tsv > ${out}/hits.lineage.noacc.fa
 
-
-
-rm ${tmp}/${FA}*
 echo "done"
