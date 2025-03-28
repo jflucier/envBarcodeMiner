@@ -262,7 +262,7 @@ input_file="${out}/dicey/hits.taxid.tsv"
 output_file="${out}/dicey/hits.lineage.tsv"
 
 # Get unique taxids
-unique_taxids=$(awk -F'\t' '{print $1}' "$input_file" | sort -u)
+unique_taxids=$(awk -F'\t' '{print $1}' "${out}/dicey/hits.taxid.tsv" | sort -u)
 total_taxids=$(echo "$unique_taxids" | wc -l)
 processed_taxids=0
 
@@ -273,11 +273,11 @@ process_taxid() {
   local tmp_taxid=""
   local tmp_id=1
 
-  awk -F'\t' -v tid="$taxid_to_process" '$1 == tid' "$input_file" | while IFS=$'\t' read -r taxid acc seq ; do
+  awk -F'\t' -v tid="$taxid_to_process" '$1 == tid' "${out}/dicey/hits.taxid.tsv" | while IFS=$'\t' read -r taxid acc seq ; do
     if [ "$taxid" = "$tmp_taxid" ]; then
       local lineage_with_id="${lineage}_${tmp_id}"
       # Use printf to avoid issues with special characters in lineage
-      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "$output_file"
+      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "${out}/dicey/hits.lineage.tsv"
     else
       tmp_id=1
       taxon_str=$(
@@ -311,7 +311,7 @@ process_taxid() {
       "
       )
       local lineage_with_id="${lineage}_${tmp_id}"
-      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "$output_file"
+      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "${out}/dicey/hits.lineage.tsv"
     fi
     tmp_taxid="$taxid"
     tmp_id=$((tmp_id+1))
@@ -349,7 +349,7 @@ print "$taxid\t$acc\t$kingdom\t$phylum\t$class\t$order\t$family\t$genus\t$specie
 ' ${out}/dicey/hits.lineage.tsv > ${out}/dicey/hits.lineage.split.tsv
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-drop table hits_lineage;
+drop table if exists hits_lineage;
 create table hits_lineage (
   taxid integer,
   accession text,

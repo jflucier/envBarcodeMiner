@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -e
+trap '' CHLD
 
 help_message () {
 	echo ""
