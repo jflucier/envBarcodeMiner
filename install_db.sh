@@ -108,6 +108,35 @@ create index accession2taxid_taxid_idx on accession2taxid(taxid);
 create index accession2taxid_accessionversion_idx on accession2taxid(\"accession.version\");
 "
 
+sqlite3 ${db}/taxonomy_db.sqlite "
+drop table if exists taxonomy;
+create table taxonomy as
+SELECT
+  NODE.tax_id taxid,
+  NODE.rank,
+  NAME.name_txt
+FROM NAME
+LEFT JOIN NODE ON NODE.tax_id = NAME.tax_id
+WHERE
+  NAME.name_class = 'scientific name'
+  AND NODE.rank in ('kingdom','phylum','class','order','family','genus','species');
+"
+
+sqlite3 ${db}/taxonomy_db.sqlite "
+alter table taxonomy add column rank_number INTEGER;
+update taxonomy set rank_number=1 where rank='kingdom';
+update taxonomy set rank_number=2 where rank='phylum';
+update taxonomy set rank_number=3 where rank='class';
+update taxonomy set rank_number=4 where rank='order';
+update taxonomy set rank_number=5 where rank='family';
+update taxonomy set rank_number=6 where rank='genus';
+update taxonomy set rank_number=7 where rank='species';
+create index taxonomy_id_rank_idx on taxonomy(rank_number,taxid);
+"
+
+
+
+
 echo "### Done setting up taxonomy db ###"
 
 echo "### Downloading core_nt db from NCBI (this might take a while... only 1 thread supported). Requires 500GB of disk space. ###"
