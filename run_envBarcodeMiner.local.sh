@@ -304,6 +304,7 @@ create table taxo_lineage (
 "
 sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/taxonomy/hits.lineage.split.tsv taxo_lineage"
 
+echo "generating TSV report: hits.lineage.byseq.tsv"
 sqlite3 ${out}/envBarcodeMiner.results.sqlite  '.separator "\t"' '.header on' "
 select
   h.Seq,
@@ -320,7 +321,7 @@ join taxo_lineage t on h.taxid=t.taxid
 group by 1;
 " > ${out}/hits.lineage.byseq.tsv
 
-# produce fasta
+echo "generating FASTA with accessions: hits.lineage.fa"
 perl -ne '
 chomp($_);
 my($seq,@t) = split("\t",$_);
@@ -340,6 +341,7 @@ if(length($seq) >= 20){
 }
 ' ${out}/hits.lineage.byseq.tsv > ${out}/hits.lineage.fa
 
+echo "generating FASTA no accessions: ${out}/hits.lineage.noacc.fa"
 perl -ne '
 chomp($_);
 my($seq,@t) = split("\t",$_);
