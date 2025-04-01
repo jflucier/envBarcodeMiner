@@ -113,7 +113,7 @@ process_index() {
   local index_path="$1"
   local thread_id="$2"
 
-  echo "### Thread $thread_id: running ${index_path} ###"
+#  echo "### Thread $thread_id: running ${index_path} ###"
 
   local fa_path="${index_path%.fm9}"
   local FA=$(basename "${fa_path}")
@@ -152,6 +152,7 @@ index_files=$(ls "${fa_list}"/*.fm9)
 counter=0
 for index_path in $index_files; do
   counter=$((counter + 1))
+  echo "### Running on index: ${index_path} (${counter} / ${TOTAL_INDEX}) ###"
   process_index "$index_path" "$counter" &
   active_processes=$(jobs -r -p | wc -l)
 
@@ -289,7 +290,7 @@ total=$(wc -l ${out}/taxonomy/hits.taxid.tsv)
   done < "${out}/taxonomy/hits.taxid.tsv"
 #done
 
-echo "Processing complete. Results in $output_file"
+echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
 
 
 
@@ -372,14 +373,13 @@ echo "Processing complete. Results in $output_file"
 #
 
 # split header and reimport to db
+echo "inserting lineage info to db"
 perl -ne '
 chomp($_);
 my($taxid,$lineage) = split("\t",$_);
 my($kingdom,$phylum,$class,$order,$family,$genus,$species) = split("\;",$lineage);
 print "$taxid\t$kingdom\t$phylum\t$class\t$order\t$family\t$genus\t$species\t$lineage\n";
-' ${out}/taxonomy/hits.taxid.tsv > ${out}/taxonomy/hits.taxid.split.tsv
-
-
+' ${out}/taxonomy/hits.lineage.tsv > ${out}/taxonomy/hits.lineage.split.tsv
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
 drop table if exists taxo_lineage;
@@ -392,10 +392,10 @@ create table taxo_lineage (
   family text,
   genus text,
   species text,
-  lineage text,
+  lineage text
 );
 "
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/taxonomy/hits.taxid.split.tsv taxo_lineage"
+sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/taxonomy/hits.lineage.split.tsv taxo_lineage"
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite  '.separator "\t"' '.header on' "
 select

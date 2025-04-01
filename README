@@ -18,4 +18,6 @@ cd ${ANALYSIS_PATH}
 # show help message
 sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh --h
 
+sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh -t 12 \
+-o $PWD -primer_f CTTGGTCATTTAGAGGAAGTAA -primer_r GCTGCGTTCTTCATCGATGC
 
