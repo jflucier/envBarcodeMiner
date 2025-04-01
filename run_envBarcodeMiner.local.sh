@@ -251,7 +251,7 @@ order by taxid
 ' > ${out}/taxonomy/hits.taxid.tsv
 
 echo "Generate dicey hits lineage TSV report: hits.lineage.tsv"
-total=$(wc -l ${out}/taxonomy/hits.taxid.tsv)
+total=$(cat ${out}/taxonomy/hits.taxid.tsv | wc -l)
 
 echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
 rm -f "${out}/taxonomy/hits.lineage.tsv"
