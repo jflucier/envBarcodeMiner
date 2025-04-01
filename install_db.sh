@@ -43,7 +43,6 @@ fi
 
 # loop through input params
 while true; do
-    # echo $1
 	case "$1" in
 		-h | --help) help_message; exit 1; shift 1;;
     -db) db=$2; shift 2;;
@@ -133,9 +132,6 @@ update taxonomy set rank_number=6 where rank='genus';
 update taxonomy set rank_number=7 where rank='species';
 create index taxonomy_id_rank_idx on taxonomy(rank_number,taxid);
 "
-
-
-
 
 echo "### Done setting up taxonomy db ###"
 
@@ -240,36 +236,6 @@ if [[ "$TOTAL_INDEX" != "$TOTAL_FA" ]]; then
 else
   echo "### DB installation done sucessfully! ###"
 fi
-
-
-## OBSOLETE: single threaded version
-#for ((i=1; i<=TOTAL_FA; i++)); do
-#  fa_path=$(ls ${db}/fa_split/*.fa | awk "NR==${i}")
-#  fm9_file="${fa_path}.fm9"
-#  if [[ ! -e "${fm9_file}" ]]; then
-#    echo "### Indexing ${fa_path} (${i} / ${TOTAL_FA}) ###"
-#      echo "zipping genome with bgzip for ${fa_path}"
-#      singularity exec --writable-tmpfs -e \
-#      -B ${db}/fa_split:${db}/fa_split \
-#      ${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
-#      bgzip --force --threads ${threads} ${fa_path}
-#
-#      echo "indexing genome with dicey for ${fa_path}"
-#      singularity exec --writable-tmpfs -e \
-#      -H ${db}/fa_split \
-#      -B ${db}/fa_split:${db}/fa_split \
-#      ${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
-#      dicey index -o ${fa_path}.fm9 ${fa_path}.gz
-#
-#      echo "indexing genome with samtools for ${fa_path}"
-#      singularity exec --writable-tmpfs -e \
-#      -B ${db}/fa_split:${db}/fa_split \
-#      ${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif \
-#      samtools faidx ${fa_path}.gz
-#  else
-#    echo "File ${fm9_file} already exists. Skipping bgzip and dicey index."
-#  fi
-#done
 
 
 

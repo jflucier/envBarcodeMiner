@@ -45,7 +45,6 @@ fi
 
 # loop through input params
 while true; do
-    # echo $1
 	case "$1" in
 		    -h | --help) help_message; exit 1; shift 1;;
         -t) threads=$2; shift 2;;
@@ -112,15 +111,11 @@ cp -r /opt/dicey/src/primer3_config ${tmp}/
 process_index() {
   local index_path="$1"
   local thread_id="$2"
-
-#  echo "### Thread $thread_id: running ${index_path} ###"
-
   local fa_path="${index_path%.fm9}"
   local FA=$(basename "${fa_path}")
 
   cp "${fa_path}"* "${tmp}/"
 
-  # Construct the base singularity command with explicit PATH
   local singularity_cmd="singularity exec --writable-tmpfs -e \
     -H \"${tmp}\" \
     -B \"${tmp}:${tmp}\" \
@@ -165,7 +160,6 @@ done
 
 # --- Wait for all background processes to finish ---
 wait
-
 
 ### check if all index runned correctly
 TOTAL_RESULTS=$(ls ${out}/dicey/part/*.tsv | wc -l)
@@ -257,120 +251,33 @@ order by taxid
 ' > ${out}/taxonomy/hits.taxid.tsv
 
 echo "Generate dicey hits lineage TSV report: hits.lineage.tsv"
-#cut -f1 ${out}/taxonomy/hits.taxid.tsv | sort | uniq > ${out}/taxonomy/hits.taxid.uniq.tsv
-#split -l 1000 ${out}/taxonomy/hits.taxid.uniq.tsv ${out}/taxonomy/hits.taxid.uniq.part
-#
-#f=${out}/taxonomy/hits.taxid.uniq.tsv
 total=$(wc -l ${out}/taxonomy/hits.taxid.tsv)
-#for f in ${out}/taxonomy/hits.taxid.uniq.part*
-#do
-  echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
-  rm -f "${out}/taxonomy/hits.lineage.tsv"
-  counter=1
-  total=$(wc -l "${out}/taxonomy/hits.taxid.tsv")
-  while IFS=$'\t' read -r taxid; do
-    echo "running taxonomic id ${taxid} (${counter} / ${total})"
-    ((counter++))
-    taxons=$( \
-    singularity exec --writable-tmpfs -e \
-    --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
-    perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite"
-    )
-    intermediate_t=$(echo "$taxons" | sed "s/'/'/g; s/\t/','/g")
-    new_t="'${intermediate_t}'"
 
-    sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' "
-    select
-      "$taxid",
-      group_concat(name_txt, ';')
-    from taxonomy
-    where taxid in ("$new_t")
-    order by rank_number asc;
-    " >> ${out}/taxonomy/hits.lineage.tsv
-  done < "${out}/taxonomy/hits.taxid.tsv"
-#done
+echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
+rm -f "${out}/taxonomy/hits.lineage.tsv"
+counter=1
+total=$(wc -l "${out}/taxonomy/hits.taxid.tsv")
+while IFS=$'\t' read -r taxid; do
+  echo "running taxonomic id ${taxid} (${counter} / ${total})"
+  ((counter++))
+  taxons=$( \
+  singularity exec --writable-tmpfs -e \
+  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
+  perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite"
+  )
+  intermediate_t=$(echo "$taxons" | sed "s/'/'/g; s/\t/','/g")
+  new_t="'${intermediate_t}'"
 
+  sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' "
+  select
+    "$taxid",
+    group_concat(name_txt, ';')
+  from taxonomy
+  where taxid in ("$new_t")
+  order by rank_number asc;
+  " >> ${out}/taxonomy/hits.lineage.tsv
+done < "${out}/taxonomy/hits.taxid.tsv"
 echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
-
-
-
-
-#unique_taxids=$(awk -F'\t' '{print $1}' "${out}/dicey/hits.taxid.tsv" | sort -u)
-#total_taxids=$(echo "$unique_taxids" | wc -l)
-#processed_taxids=0
-#
-## Function to process a single taxid
-#process_taxid() {
-#  local taxid_to_process="$1"
-#  local thread_id="$2"
-#  local tmp_taxid=""
-#  local tmp_id=1
-#
-#  awk -F'\t' -v tid="$taxid_to_process" '$1 == tid' "${out}/dicey/hits.taxid.tsv" | while IFS=$'\t' read -r taxid acc seq ; do
-#    if [ "$taxid" = "$tmp_taxid" ]; then
-#      local lineage_with_id="${lineage}_${tmp_id}"
-#      # Use printf to avoid issues with special characters in lineage
-#      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "${out}/dicey/hits.lineage.tsv"
-#    else
-#      tmp_id=1
-#      taxon_str=$(
-#        taxons=$(singularity exec --writable-tmpfs -e \
-#        --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
-#        perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite")
-#        for t in $taxons;
-#        do
-#          singularity exec --writable-tmpfs -e \
-#          --no-home \
-#          -B "${tmp}:${tmp}" \
-#          -B "${db}:${db}" \
-#          "${DICEY_SIF}" \
-#          perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$t" "${db}/taxonomy_db.sqlite" | grep -m 1 "scientific name";
-#        done |
-#          cut -f 1-3,15,16 |
-#          grep -P 'kingdom|phylum|class|order|family|genus|species' |
-#          grep -vP '\tsuper\w+' |
-#          grep -vP '\tsub\w+' |
-#          grep -vP '\tno rank' |
-#          sed "s/'/ /g" | cut -f 4 | perl -ne 'chomp($_); print $_ . ","'
-#      )
-#
-#      lineage=$(
-#      perl -e "
-#      my \$tt = '$taxon_str';
-#      my @t = split(',',\$tt);
-#      my @rv = reverse(@t);
-#      my \$s = join(';',@rv);
-#      print \$s. \";$acc\" . \"\n\";
-#      "
-#      )
-#      local lineage_with_id="${lineage}_${tmp_id}"
-#      printf "%s\t%s\t%s\t%s\n" "$taxid" "$acc" "$lineage_with_id" "$seq" >> "${out}/dicey/hits.lineage.tsv"
-#    fi
-#    tmp_taxid="$taxid"
-#    tmp_id=$((tmp_id+1))
-#  done
-#
-#}
-#
-## Initialize output file with header
-#echo -e "taxid\tacc\tlineage\tseq" > "$output_file"
-#
-## Launch threads to process unique taxids
-#thread_id=1
-#counter=1
-#for tid in $unique_taxids; do
-#  echo "Processing ${tid} (${counter} / ${total_taxids})"
-#  process_taxid "$tid" "$thread_id" &
-#  ((thread_id++))
-#  ((counter++))
-#  if (( thread_id > threads )); then
-#    wait # Wait for all threads to finish before launching more
-#    thread_id=1
-#  fi
-#done
-#
-#wait # Wait for any remaining threads
-#
 
 # split header and reimport to db
 echo "inserting lineage info to db"
