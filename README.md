@@ -15,7 +15,7 @@ singularity build --force --fakeroot envBarcodeMiner.sif envBarcodeMiner.def
 ```
 ### setup db
 ```
-cd {ENVBARCODEMINER_PATH}
+cd ${ENVBARCODEMINER_PATH}
 sh install_db.sh
 ```
 ### analysis example ###
