@@ -9,7 +9,7 @@ git clone git@github.com:jflucier/envBarcodeMiner.git
 ```
 ### setup dicey container
 ```
-cd {ENVBARCODEMINER_PATH}
+cd ${ENVBARCODEMINER_PATH}
 cd containers
 singularity build --force --fakeroot envBarcodeMiner.sif envBarcodeMiner.def
 ```
