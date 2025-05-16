@@ -21,7 +21,7 @@ help_message () {
 
 export ENVBARCODEMINER_PATH=$(dirname "$0")
 export CONTAINER="${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif"
-
+echo "container path: ${CONTAINER}"
 cd ${ENVBARCODEMINER_PATH}
 
 # initialisation
@@ -67,9 +67,13 @@ fi
 echo "### Database will be installed in this path: ${db} ###"
 mkdir -p ${db}
 
+echo "container path: ${CONTAINER}"
+
 echo "### Downloading NCBI taxonomy ###"
 mkdir -p ${db}/taxonomy
 cd ${db}/taxonomy
+
+echo "container path: ${CONTAINER}"
 
 if [ -e "${db}/taxonomy/taxdump.tar.gz" ]; then
   echo "File ${db}/taxonomy/taxdump.tar.gz already exists. Will skip download."
@@ -82,28 +86,33 @@ if [ -e "${db}/taxonomy/nucl_gb.accession2taxid" ]; then
   echo "File ${db}/taxonomy/nucl_gb.accession2taxid already exists. Will skip download."
 else
   wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+  echo "Extracting nucl_gb.accession2taxid.gz..."
+  gunzip nucl_gb.accession2taxid.gz
 fi
 
 if [ -e "${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA" ]; then
   echo "File ${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA already exists. Will skip download."
 else
   wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.EXTRA.gz
+  echo "Extracting nucl_wgs.accession2taxid.EXTRA.gz..."
+  gunzip nucl_wgs.accession2taxid.EXTRA.gz
 fi
 
 if [ -e "${db}/taxonomy/nucl_wgs.accession2taxid" ]; then
   echo "File ${db}/taxonomy/nucl_wgs.accession2taxid already exists. Will skip download."
 else
   wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.gz
+  echo "Extracting nucl_wgs.accession2taxid.gz..."
+  gunzip nucl_wgs.accession2taxid.gz
 fi
 
-echo "Extracting NCBI db files"
-gunzip nucl_gb.accession2taxid.gz
-gunzip nucl_wgs.accession2taxid.EXTRA.gz
-gunzip nucl_wgs.accession2taxid.gz
+echo "container path: ${CONTAINER}"
+
 
 cd ${ENVBARCODEMINER_PATH}
 echo "### Setting up taxonomy database ###"
 rm -f ${db}/envBarcodeMiner_db.sqlite
+echo "container path: ${CONTAINER}"
 singularity exec --writable-tmpfs -e \
 -B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
 ${CONTAINER} \
