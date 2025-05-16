@@ -70,11 +70,33 @@ mkdir -p ${db}
 echo "### Downloading NCBI taxonomy ###"
 mkdir -p ${db}/taxonomy
 cd ${db}/taxonomy
-wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+
+if [ -e "${db}/taxonomy/taxdump.tar.gz" ]; then
+  echo "File ${db}/taxonomy/taxdump.tar.gz already exists. Will skip download."
+else
+  wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+fi
 tar -zxvf taxdump.tar.gz
-wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
-wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.EXTRA.gz
-wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.gz
+
+if [ -e "${db}/taxonomy/nucl_gb.accession2taxid" ]; then
+  echo "File ${db}/taxonomy/nucl_gb.accession2taxid already exists. Will skip download."
+else
+  wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz
+fi
+
+if [ -e "${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA" ]; then
+  echo "File ${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA already exists. Will skip download."
+else
+  wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.EXTRA.gz
+fi
+
+if [ -e "${db}/taxonomy/nucl_wgs.accession2taxid" ]; then
+  echo "File ${db}/taxonomy/nucl_wgs.accession2taxid already exists. Will skip download."
+else
+  wget https://ftp.ncbi.nih.gov/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.gz
+fi
+
+echo "Extracting NCBI db files"
 gunzip nucl_gb.accession2taxid.gz
 gunzip nucl_wgs.accession2taxid.EXTRA.gz
 gunzip nucl_wgs.accession2taxid.gz
