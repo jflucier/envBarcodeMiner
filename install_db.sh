@@ -19,7 +19,7 @@ help_message () {
 	echo "";
 }
 
-export ENVBARCODEMINER_PATH=$(dirname "$0")
+export ENVBARCODEMINER_PATH=$(realpath "$(dirname "$0")")
 export CONTAINER="${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif"
 echo "container path: ${CONTAINER}"
 cd ${ENVBARCODEMINER_PATH}
