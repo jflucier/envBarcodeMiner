@@ -79,8 +79,9 @@ if [ -e "${db}/taxonomy/taxdump.tar.gz" ]; then
   echo "File ${db}/taxonomy/taxdump.tar.gz already exists. Will skip download."
 else
   wget ftp://ftp.ncbi.nih.gov/pub/taxonomy/taxdump.tar.gz
+  echo "Extracting taxdump.tar.gz..."
+  tar -zxvf taxdump.tar.gz
 fi
-tar -zxvf taxdump.tar.gz
 
 if [ -e "${db}/taxonomy/nucl_gb.accession2taxid" ]; then
   echo "File ${db}/taxonomy/nucl_gb.accession2taxid already exists. Will skip download."
