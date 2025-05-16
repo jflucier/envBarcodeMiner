@@ -21,7 +21,6 @@ help_message () {
 
 export ENVBARCODEMINER_PATH=$(realpath "$(dirname "$0")")
 export CONTAINER="${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif"
-echo "container path: ${CONTAINER}"
 cd ${ENVBARCODEMINER_PATH}
 
 # initialisation
@@ -67,13 +66,9 @@ fi
 echo "### Database will be installed in this path: ${db} ###"
 mkdir -p ${db}
 
-echo "container path: ${CONTAINER}"
-
 echo "### Downloading NCBI taxonomy ###"
 mkdir -p ${db}/taxonomy
 cd ${db}/taxonomy
-
-echo "container path: ${CONTAINER}"
 
 if [ -e "${db}/taxonomy/taxdump.tar.gz" ]; then
   echo "File ${db}/taxonomy/taxdump.tar.gz already exists. Will skip download."
@@ -113,7 +108,7 @@ echo "container path: ${CONTAINER}"
 cd ${ENVBARCODEMINER_PATH}
 echo "### Setting up taxonomy database ###"
 rm -f ${db}/envBarcodeMiner_db.sqlite
-echo "container path: ${CONTAINER}"
+rm -f ${db}/taxonomy_db.sqlite
 singularity exec --writable-tmpfs -e \
 -B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
 ${CONTAINER} \
