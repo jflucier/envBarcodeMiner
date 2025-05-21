@@ -163,4 +163,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     json_url = "https://ftp.ncbi.nlm.nih.gov/blast/db/core_nt-nucl-metadata.json"
-    download_ncbi_nt_files(json_url, args.download_directory)
+    download_ncbi_nt_files(json_url, args.db)
