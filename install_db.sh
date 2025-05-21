@@ -53,7 +53,7 @@ while true; do
 done
 
 if [ "$db" = "false" ]; then
-  db=${ENVBARCODEMINER_PATH}/db
+  db="${ENVBARCODEMINER_PATH}/db"
 fi
 
 if [[ "$threads" =~ ^[0-9]+$ ]]; then

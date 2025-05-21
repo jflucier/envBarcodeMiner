@@ -156,7 +156,7 @@ if __name__ == "__main__":
     script_directory = os.path.dirname(os.path.abspath(__file__))
     parser = argparse.ArgumentParser(description="Download and process NCBI nucleotide database files.")
     parser.add_argument(
-        "download_directory",
+        "db",
         help="The directory to download the files to.",
         default=os.path.join(script_directory, "db")
     )
