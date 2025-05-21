@@ -120,9 +120,11 @@ singularity exec --writable-tmpfs -e \
 ${CONTAINER} \
 perl /opt/taxdb/scripts/taxdb_add.pl ${db}/taxonomy_db.sqlite ${db}/taxonomy
 
-echo "### Importing nucl_gb, nucl_wgs and nucl_wgs.extra to db ###"
+echo "### Importing nucl_gb to db ###"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_gb.accession2taxid accession2taxid"
+echo "### Importing nucl_wgs to db ###"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_wgs.accession2taxid accession2taxid"
+echo "### Importing nucl_wgs.extra to db ###"
 sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' '.header on' ".import ${db}/taxonomy/nucl_wgs.accession2taxid.EXTRA accession2taxid"
 
 echo "### Indexing taxonomy db ###"
