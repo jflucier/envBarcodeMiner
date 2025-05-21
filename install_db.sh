@@ -169,7 +169,7 @@ mkdir -p ${db}/NCBI
 singularity exec --writable-tmpfs -e \
 -B ${ENVBARCODEMINER_PATH}:${ENVBARCODEMINER_PATH} \
 ${CONTAINER} \
-python3 download_envBarcodeMiner_db.py --db ${db}/NCBI
+python3 download_envBarcodeMiner_db.py ${db}/NCBI
 
 echo "### Generating envBarcodeMiner.core_nt.fa (this might take a while... again single thread only!). Requires another 1TB of disk space ###"
 singularity exec --writable-tmpfs -e \
