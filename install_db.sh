@@ -241,7 +241,7 @@ done
 wait
 
 # check if fm9 files = total fa to see if errors
-TOTAL_INDEX=$(ls ${db}/fa_split/*.fa.fm9 | wc -l)
+TOTAL_INDEX=$(ls ${FA_SPLIT_DIR}/*.fa.fm9 | wc -l)
 if [[ "$TOTAL_INDEX" != "$TOTAL_FA" ]]; then
   echo "### Detected some error in dicey index generation. Will try to recuperate. ###"
   fasta_files=$(ls ${FA_SPLIT_DIR}/*.fa.gz)
@@ -255,7 +255,7 @@ if [[ "$TOTAL_INDEX" != "$TOTAL_FA" ]]; then
   done
 fi
 
-TOTAL_INDEX=$(ls ${db}/fa_split/*.fa.fm9 | wc -l)
+TOTAL_INDEX=$(ls ${FA_SPLIT_DIR}/*.fa.fm9 | wc -l)
 if [[ "$TOTAL_INDEX" != "$TOTAL_FA" ]]; then
   echo "### Still detected some error in dicey index generation. Please investigate these files: ###"
   fasta_files=$(ls ${FA_SPLIT_DIR}/*.fa.gz)
