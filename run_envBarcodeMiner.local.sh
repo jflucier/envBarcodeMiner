@@ -272,9 +272,13 @@ while IFS=$'\t' read -r taxid; do
   select
     "$taxid",
     group_concat(name_txt, ';')
-  from taxonomy
-  where taxid in ("$new_t")
-  order by rank_number asc;
+  from (
+    select
+      name_txt
+    from taxonomy
+    where taxid in ("$new_t")
+    order by rank_number asc
+  );
   " >> ${out}/taxonomy/hits.lineage.tsv
 done < "${out}/taxonomy/hits.taxid.tsv"
 echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
