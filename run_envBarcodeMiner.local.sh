@@ -255,6 +255,7 @@ total=$(cat ${out}/taxonomy/hits.taxid.tsv | wc -l)
 
 echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
 rm -f "${out}/taxonomy/hits.lineage.tsv"
+touch "${out}/taxonomy/hits.lineage.tsv"
 counter=1
 total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
 while IFS=$'\t' read -r taxid; do
