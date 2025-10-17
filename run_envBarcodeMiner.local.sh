@@ -97,7 +97,7 @@ echo "generate primer fasta im temp folder"
 echo ">primer_f
 $primer_f
 >primer_r
-$primer_r" > ${tmp}/primers.fa
+$primer_r" > ${out}/primers.fa
 
 export DICEY_SIF=${ENVBARCODEMINER_PATH}/containers/envBarcodeMiner.sif
 
@@ -126,7 +126,7 @@ process_index() {
     -i \"${tmp}/primer3_config/\" \
     -o \"${tmp}/${FA}.json.gz\" \
     -g \"${tmp}/${FA}.gz\" \
-    \"${tmp}/primers.fa\""
+    \"${out}/primers.fa\""
 
   eval "${singularity_cmd} python3 /opt/dicey/scripts/json2tsv.py \
     -m amplicon \
