@@ -122,7 +122,7 @@ process_index() {
     --env \"PATH=/opt/dicey/bin:/usr/bin:$PATH\" \
     \"${DICEY_SIF}\""
 
-  eval "${singularity_cmd} /opt/dicey/bin/dicey search \
+  eval "${singularity_cmd} /opt/dicey/bin/dicey search  -m 10000000 \
     -i \"${tmp}/primer3_config/\" \
     -o \"${tmp}/${FA}.json.gz\" \
     -g \"${tmp}/${FA}.gz\" \
