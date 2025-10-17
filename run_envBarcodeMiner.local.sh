@@ -226,7 +226,7 @@ sqlite3 ${out}/envBarcodeMiner.results.sqlite "
 delete from hits where Chrom='Chrom';
 "
 
-mkdir -p taxonomy
+mkdir -p ${out}/taxonomy
 echo "associate taxonomic information to dicey hits"
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
 ATTACH DATABASE '${db}/taxonomy_db.sqlite' AS taxo;
