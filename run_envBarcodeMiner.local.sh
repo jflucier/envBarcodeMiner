@@ -261,26 +261,38 @@ total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
 while IFS=$'\t' read -r taxid; do
   echo "running taxonomic id ${taxid} (${counter} / ${total})"
   ((counter++))
-  taxons=$( \
-  singularity exec --writable-tmpfs -e \
-  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
-  perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite"
-  )
-  intermediate_t=$(echo "$taxons" | sed "s/'/'/g; s/\t/','/g")
-  new_t="'${intermediate_t}'"
 
-  sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' "
-  select
-    "$taxid",
-    group_concat(name_txt, ';')
-  from (
-    select
-      name_txt
-    from taxonomy
-    where taxid in ("$new_t")
-    order by rank_number asc
-  );
-  " >> ${out}/taxonomy/hits.lineage.tsv
+  singularity exec --writable-tmpfs -e \
+  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
+  /bin/bash -c "
+  taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
+  intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
+
+  new_t=\"'\${intermediate_t}'\";
+
+  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+
+  " >> "${out}/taxonomy/hits.lineage.tsv"
+#  taxons=$( \
+#  singularity exec --writable-tmpfs -e \
+#  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
+#  perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite"
+#  )
+#  intermediate_t=$(echo "$taxons" | sed "s/'/'/g; s/\t/','/g")
+#  new_t="'${intermediate_t}'"
+#
+#  sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' "
+#  select
+#    "$taxid",
+#    group_concat(name_txt, ';')
+#  from (
+#    select
+#      name_txt
+#    from taxonomy
+#    where taxid in ("$new_t")
+#    order by rank_number asc
+#  );
+#  " >> ${out}/taxonomy/hits.lineage.tsv
 done < "${out}/taxonomy/hits.taxid.tsv"
 echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
 
