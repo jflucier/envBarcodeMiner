@@ -258,9 +258,15 @@ rm -f "${out}/taxonomy/hits.lineage.tsv"
 touch "${out}/taxonomy/hits.lineage.tsv"
 counter=1
 total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
-while IFS=$'\t' read -r taxid; do
-  echo "running taxonomic id ${taxid} (${counter} / ${total})"
-  ((counter++))
+
+
+export tmp db out DICEY_SIF
+taxdb_query() {
+  local taxid="$1"
+  local tmp="${tmp}"
+  local db="${db}"
+  local out="${out}"
+  local DICEY_SIF="${DICEY_SIF}"
 
   singularity exec --writable-tmpfs -e \
   --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
@@ -270,30 +276,32 @@ while IFS=$'\t' read -r taxid; do
 
   new_t=\"'\${intermediate_t}'\";
 
+  # The sqlite3 command prints the result line to stdout
   sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+  "
+}
 
-  " >> "${out}/taxonomy/hits.lineage.tsv"
-#  taxons=$( \
-#  singularity exec --writable-tmpfs -e \
-#  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" "${DICEY_SIF}" \
-#  perl /opt/taxdb/scripts/taxdb_query.pl --taxon "$taxid" --mode lineage "${db}/taxonomy_db.sqlite"
-#  )
-#  intermediate_t=$(echo "$taxons" | sed "s/'/'/g; s/\t/','/g")
-#  new_t="'${intermediate_t}'"
+export -f taxdb_query
+echo "Starting parallel processing..."
+/usr/bin/env parallel --jobs $threads \
+--joblog "${out}/taxonomy/taxdb_parallel.log" taxdb_query :::: "${out}/taxonomy/hits.taxid.tsv" >> "${out}/taxonomy/hits.lineage.tsv"
+
+#while IFS=$'\t' read -r taxid; do
+#  echo "running taxonomic id ${taxid} (${counter} / ${total})"
+#  ((counter++))
 #
-#  sqlite3 ${db}/taxonomy_db.sqlite '.separator "\t"' "
-#  select
-#    "$taxid",
-#    group_concat(name_txt, ';')
-#  from (
-#    select
-#      name_txt
-#    from taxonomy
-#    where taxid in ("$new_t")
-#    order by rank_number asc
-#  );
-#  " >> ${out}/taxonomy/hits.lineage.tsv
-done < "${out}/taxonomy/hits.taxid.tsv"
+#  singularity exec --writable-tmpfs -e \
+#  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
+#  /bin/bash -c "
+#  taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
+#  intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
+#
+#  new_t=\"'\${intermediate_t}'\";
+#
+#  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+#
+#  " >> "${out}/taxonomy/hits.lineage.tsv"
+#done < "${out}/taxonomy/hits.taxid.tsv"
 echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
 
 # split header and reimport to db
