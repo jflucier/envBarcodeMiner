@@ -276,7 +276,7 @@ taxdb_query() {
   new_t=\"'\${intermediate_t}'\";
 
   sqlite3 ${db}/taxonomy_db.sqlite \
-  \"SELECT printf('%%s\t%%s\n', '${taxid}', group_concat(name_txt, ';')) FROM (SELECT name_txt FROM taxonomy WHERE taxid IN (\$new_t) ORDER BY rank_number ASC);\"
+  \"SELECT printf('%s\t%s\n', '${taxid}', group_concat(name_txt, ';')) FROM (SELECT name_txt FROM taxonomy WHERE taxid IN (\$new_t) ORDER BY rank_number ASC);\"
   "
 }
 
