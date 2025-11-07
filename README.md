@@ -30,3 +30,17 @@ sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh -h
 sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh -t 12 \
 -o $PWD -primer_f CTTGGTCATTTAGAGGAAGTAA -primer_r GCTGCGTTCTTCATCGATGC
 ```
+
+### Run with degenerate pairs
+
+```
+mkdir -p primer_pairs
+bash $ENVBARCODEMINER_PATH/dedegenerate.sh CYGTRCDAAGGTAGCATA TARTYCAACATCGRGGTC primer_pairs/all_primers.tsv
+
+while read -r FWD REV; do
+    OUT_DIR=$ANALYSIS_PATH/primer_pairs/${FWD}_${REV}
+    #if [[ -f $OUT_DIR ]]
+    mkdir -p $OUT_DIR
+    nice sh $ENVBARCODEMINER_PATH/run_envBarcodeMiner.local.sh -t 36 -o $OUT_DIR -primer_f $FWD -primer_r $REV
+done < primer_pairs/all_primers.tsv
+```
