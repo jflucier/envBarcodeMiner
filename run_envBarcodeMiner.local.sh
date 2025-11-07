@@ -259,7 +259,6 @@ touch "${out}/taxonomy/hits.lineage.tsv"
 counter=1
 total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
 
-
 export tmp db out DICEY_SIF
 taxdb_query() {
   local taxid="$1"
@@ -276,8 +275,8 @@ taxdb_query() {
 
   new_t=\"'\${intermediate_t}'\";
 
-  # The sqlite3 command prints the result line to stdout
-  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+  sqlite3 ${db}/taxonomy_db.sqlite \
+  \"SELECT printf('%%s\t%%s\n', '${taxid}', group_concat(name_txt, ';')) FROM (SELECT name_txt FROM taxonomy WHERE taxid IN (\$new_t) ORDER BY rank_number ASC);\"
   "
 }
 
@@ -308,9 +307,9 @@ echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
 echo "inserting lineage info to db"
 perl -ne '
 chomp($_);
-my($taxid,$lineage) = split("\t",$_);
-my($kingdom,$phylum,$class,$order,$family,$genus,$species) = split("\;",$lineage);
-print "$taxid\t$kingdom\t$phylum\t$class\t$order\t$family\t$genus\t$species\t$lineage\n";
+my($taxid,$lineage) = split(/\t/,$_);
+my($kingdom,$phylum,$class,$order,$family,$genus,$species) = split(/;/,$lineage);
+print join("\t", $taxid, $kingdom, $phylum, $class, $order, $family, $genus, $species, $lineage) . "\n";
 ' ${out}/taxonomy/hits.lineage.tsv > ${out}/taxonomy/hits.lineage.split.tsv
 
 sqlite3 ${out}/envBarcodeMiner.results.sqlite "
