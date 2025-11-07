@@ -139,108 +139,111 @@ process_index() {
   rm "${tmp}/${FA}"*
 }
 
-TOTAL_INDEX=$(ls ${fa_list}/*.fm9 | wc -l)
-echo "will run dicey search on ${TOTAL_INDEX} indexes using ${threads} threads"
-# --- Get the list of index files ---
-index_files=$(ls "${fa_list}"/*.fm9)
-# --- Loop through index files and run in parallel ---
-counter=0
-for index_path in $index_files; do
-  counter=$((counter + 1))
-  echo "### Running on index: ${index_path} (${counter} / ${TOTAL_INDEX}) ###"
-  process_index "$index_path" "$counter" &
-  active_processes=$(jobs -r -p | wc -l)
-
-  # Wait if we reach the maximum number of threads
-  while [[ "$active_processes" -ge "$threads" ]]; do
-    sleep 0.1
-    active_processes=$(jobs -r -p | wc -l)
-  done
-done
-
-# --- Wait for all background processes to finish ---
-wait
-
-### check if all index runned correctly
-TOTAL_RESULTS=$(ls ${out}/dicey/part/*.tsv | wc -l)
-counter=0
-if [[ "$TOTAL_INDEX" != "$TOTAL_RESULTS" ]]; then
-  echo "### Detected some error in dicey search. Will try rerunning erors: ###"
-  for index_path in $index_files; do
-    index_base=$(basename $index_path)
-    res_file=${fa_path%.fm9}
-    if [[ ! -e "${out}/dicey/part/${res_file}.tsv" ]]; then
+if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
+    
+    TOTAL_INDEX=$(ls ${fa_list}/*.fm9 | wc -l)
+    echo "will run dicey search on ${TOTAL_INDEX} indexes using ${threads} threads"
+    # --- Get the list of index files ---
+    index_files=$(ls "${fa_list}"/*.fm9)
+    # --- Loop through index files and run in parallel ---
+    counter=0
+    for index_path in $index_files; do
       counter=$((counter + 1))
-      echo "rerunning index ${index_base}"
+      echo "### Running on index: ${index_path} (${counter} / ${TOTAL_INDEX}) ###"
       process_index "$index_path" "$counter" &
+      active_processes=$(jobs -r -p | wc -l)
+    
+      # Wait if we reach the maximum number of threads
+      while [[ "$active_processes" -ge "$threads" ]]; do
+        sleep 0.1
+        active_processes=$(jobs -r -p | wc -l)
+      done
+    done
+    
+    # --- Wait for all background processes to finish ---
+    wait
+    
+    ### check if all index runned correctly
+    TOTAL_RESULTS=$(ls ${out}/dicey/part/*.tsv | wc -l)
+    counter=0
+    if [[ "$TOTAL_INDEX" != "$TOTAL_RESULTS" ]]; then
+      echo "### Detected some error in dicey search. Will try rerunning erors: ###"
+      for index_path in $index_files; do
+        index_base=$(basename $index_path)
+        res_file=${fa_path%.fm9}
+        if [[ ! -e "${out}/dicey/part/${res_file}.tsv" ]]; then
+          counter=$((counter + 1))
+          echo "rerunning index ${index_base}"
+          process_index "$index_path" "$counter" &
+        fi
+      done
+    else
+      echo "Dicey search done sucessfully!"
     fi
-  done
-else
-  echo "Dicey search done sucessfully!"
+    
+    echo "combine all dicey results in ${out}/dicey_results.tsv"
+    cat ${out}/dicey/part/*.tsv > ${out}/dicey/dicey_results.tsv
+    
+    echo "trim hits accession version from all hits"
+    perl -ne '
+    chomp($_);
+    if($_ =~ /^Amplicon\tId/){
+      print $_ . "\n";
+    }
+    else{
+      my @t = split("\t",$_);
+      my $tmp = $t[4];
+      my($ns) = $t[4] =~ /^(.*)\.\d+$/;
+      $t[4] = $ns;
+      print join("\t",@t) . "\n";
+    }
+    ' ${out}/dicey/dicey_results.tsv > ${out}/dicey/dicey_results.acc.tsv
+    
+    echo "Initialise envBarcodeMiner result db with dicey hits"
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite "
+    drop table if exists hits;
+    create table hits (
+    Amplicon TEXT,
+    Id INTEGER,
+    Length INTEGER,
+    Penalty FLOAT,
+    Chrom TEXT,
+    ForPos INTEGER,
+    ForEnd INTEGER,
+    ForTm FLOAT,
+    ForName TEXT,
+    ForSeq TEXT,
+    ChromV TEXT,
+    RevPos INTEGER,
+    RevEnd INTEGER,
+    RevTm FLOAT,
+    RevName TEXT,
+    RevSeq TEXT,
+    Seq TEXT
+    );
+    "
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/dicey/dicey_results.acc.tsv hits"
+    
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite "
+    delete from hits where Chrom='Chrom';
+    "
+    
+    mkdir -p ${out}/taxonomy
+    echo "associate taxonomic information to dicey hits"
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite "
+    ATTACH DATABASE '${db}/taxonomy_db.sqlite' AS taxo;
+    drop table if exists hits_taxid;
+    create table hits_taxid as
+    select
+      h.Chrom || '_' || h.Id Id,
+      h.Chrom,
+      a.taxid,
+      h.Seq
+    from
+      hits h
+      join taxo.accession2taxid a on h.Chrom=a.\"accession\";
+    "
 fi
-
-echo "combine all dicey results in ${out}/dicey_results.tsv"
-cat ${out}/dicey/part/*.tsv > ${out}/dicey/dicey_results.tsv
-
-echo "trim hits accession version from all hits"
-perl -ne '
-chomp($_);
-if($_ =~ /^Amplicon\tId/){
-  print $_ . "\n";
-}
-else{
-  my @t = split("\t",$_);
-  my $tmp = $t[4];
-  my($ns) = $t[4] =~ /^(.*)\.\d+$/;
-  $t[4] = $ns;
-  print join("\t",@t) . "\n";
-}
-' ${out}/dicey/dicey_results.tsv > ${out}/dicey/dicey_results.acc.tsv
-
-echo "Initialise envBarcodeMiner result db with dicey hits"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-drop table if exists hits;
-create table hits (
-Amplicon TEXT,
-Id INTEGER,
-Length INTEGER,
-Penalty FLOAT,
-Chrom TEXT,
-ForPos INTEGER,
-ForEnd INTEGER,
-ForTm FLOAT,
-ForName TEXT,
-ForSeq TEXT,
-ChromV TEXT,
-RevPos INTEGER,
-RevEnd INTEGER,
-RevTm FLOAT,
-RevName TEXT,
-RevSeq TEXT,
-Seq TEXT
-);
-"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/dicey/dicey_results.acc.tsv hits"
-
-sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-delete from hits where Chrom='Chrom';
-"
-
-mkdir -p ${out}/taxonomy
-echo "associate taxonomic information to dicey hits"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-ATTACH DATABASE '${db}/taxonomy_db.sqlite' AS taxo;
-drop table if exists hits_taxid;
-create table hits_taxid as
-select
-  h.Chrom || '_' || h.Id Id,
-  h.Chrom,
-  a.taxid,
-  h.Seq
-from
-  hits h
-  join taxo.accession2taxid a on h.Chrom=a.\"accession\";
-"
 
 echo "Generate dicey hits TSV report: hits.taxid.tsv"
 sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header off' '
