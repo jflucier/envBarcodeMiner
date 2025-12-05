@@ -30,6 +30,7 @@ sed -E '
   
   # Remove uncultured prefix
   s|uncultured ||g;
+  s|uncultured glomeraceous AM fungus||g;
   
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
