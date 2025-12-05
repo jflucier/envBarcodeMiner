@@ -25,7 +25,7 @@ sed -E '
   
   # Combine fungal taxonomy fixes (order matters!)
   s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|;
-  s|Fungi;(Mucoromycota;)?Glomerales|Fungi;Mucuromycota;Glomeromycetes;Glomerales|;
+  s|Fungi;(Mucoromycota;)?Glomerales|Fungi;Mucoromycota;Glomeromycetes;Glomerales|;
   s|Fungi;Glomeromycetes|Fungi;Mucoromycota;Glomeromycetes|;
   
   # Remove uncultured prefix
@@ -146,7 +146,7 @@ echo "Removed headers: $removed_headers" | tee -a "$logfile"
 # List some examples of removed sequences
 if [ $removed_headers -gt 0 ]; then
     echo -e "\nExamples of removed headers:" | tee -a "$logfile"
-    grep '^>' "$removed_output" | head -5 | tee -a "$logfile"
+    grep '^>' "$removed_output" | head -20 | tee -a "$logfile"
 fi
 
 # Verify all cleaned headers have 6 semicolons
