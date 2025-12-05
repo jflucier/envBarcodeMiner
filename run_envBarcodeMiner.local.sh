@@ -245,109 +245,111 @@ if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
     "
 fi
 
-echo "Generate dicey hits TSV report: hits.taxid.tsv"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header off' '
-select distinct
-   taxid
-from hits_taxid
-order by taxid
-' > ${out}/taxonomy/hits.taxid.tsv
-
-echo "Generate dicey hits lineage TSV report: hits.lineage.tsv"
-total=$(cat ${out}/taxonomy/hits.taxid.tsv | wc -l)
-
-echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
-rm -f "${out}/taxonomy/hits.lineage.tsv"
-touch "${out}/taxonomy/hits.lineage.tsv"
-counter=1
-total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
-
-
-export tmp db out DICEY_SIF
-taxdb_query() {
-  local taxid="$1"
-  local tmp="${tmp}"
-  local db="${db}"
-  local out="${out}"
-  local DICEY_SIF="${DICEY_SIF}"
-
-  singularity exec --writable-tmpfs -e \
-  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
-  /bin/bash -c "
-  taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
-  intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
-
-  new_t=\"'\${intermediate_t}'\";
-
-  # The sqlite3 command prints the result line to stdout
-  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
-  "
-}
-
-export -f taxdb_query
-echo "Starting parallel processing..."
-/usr/bin/env parallel --jobs $threads \
---joblog "${out}/taxonomy/taxdb_parallel.log" taxdb_query :::: "${out}/taxonomy/hits.taxid.tsv" >> "${out}/taxonomy/hits.lineage.tsv"
-
-#while IFS=$'\t' read -r taxid; do
-#  echo "running taxonomic id ${taxid} (${counter} / ${total})"
-#  ((counter++))
-#
-#  singularity exec --writable-tmpfs -e \
-#  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
-#  /bin/bash -c "
-#  taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
-#  intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
-#
-#  new_t=\"'\${intermediate_t}'\";
-#
-#  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
-#
-#  " >> "${out}/taxonomy/hits.lineage.tsv"
-#done < "${out}/taxonomy/hits.taxid.tsv"
-echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
-
-# split header and reimport to db
-echo "inserting lineage info to db"
-perl -ne '
-chomp($_);
-my($taxid,$lineage) = split("\t",$_);
-my($kingdom,$phylum,$class,$order,$family,$genus,$species) = split("\;",$lineage);
-print "$taxid\t$kingdom\t$phylum\t$class\t$order\t$family\t$genus\t$species\t$lineage\n";
-' ${out}/taxonomy/hits.lineage.tsv > ${out}/taxonomy/hits.lineage.split.tsv
-
-sqlite3 ${out}/envBarcodeMiner.results.sqlite "
-drop table if exists taxo_lineage;
-create table taxo_lineage (
-  taxid integer,
-  kingdom text,
-  phylum text,
-  class text,
-  t_order text,
-  family text,
-  genus text,
-  species text,
-  lineage text
-);
-"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/taxonomy/hits.lineage.split.tsv taxo_lineage"
-
-echo "generating TSV report: hits.lineage.byseq.tsv"
-sqlite3 ${out}/envBarcodeMiner.results.sqlite  '.separator "\t"' '.header on' "
-select
-  h.Seq,
-  group_concat(distinct t.kingdom) kingdom,
-  group_concat(distinct t.phylum) phylum,
-  group_concat(distinct t.class) class,
-  group_concat(distinct t.t_order) t_order,
-  group_concat(distinct t.family) family,
-  group_concat(distinct t.genus) genus,
-  group_concat(distinct t.species) species,
-  group_concat(distinct h.Chrom) accession
-from hits_taxid h
-join taxo_lineage t on h.taxid=t.taxid
-group by 1;
-" > ${out}/hits.lineage.byseq.tsv
+if [[ ! -f ${out}/hits.lineage.byseq.tsv ]]; then
+    echo "Generate dicey hits TSV report: hits.taxid.tsv"
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' '.header off' '
+    select distinct
+       taxid
+    from hits_taxid
+    order by taxid
+    ' > ${out}/taxonomy/hits.taxid.tsv
+    
+    echo "Generate dicey hits lineage TSV report: hits.lineage.tsv"
+    total=$(cat ${out}/taxonomy/hits.taxid.tsv | wc -l)
+    
+    echo "### running taxdb on ${out}/taxonomy/hits.taxid.tsv"
+    rm -f "${out}/taxonomy/hits.lineage.tsv"
+    touch "${out}/taxonomy/hits.lineage.tsv"
+    counter=1
+    total=$(cat "${out}/taxonomy/hits.taxid.tsv" | wc -l)
+    
+    
+    export tmp db out DICEY_SIF
+    taxdb_query() {
+      local taxid="$1"
+      local tmp="${tmp}"
+      local db="${db}"
+      local out="${out}"
+      local DICEY_SIF="${DICEY_SIF}"
+    
+      singularity exec --writable-tmpfs -e \
+      --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
+      /bin/bash -c "
+      taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
+      intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
+    
+      new_t=\"'\${intermediate_t}'\";
+    
+      # The sqlite3 command prints the result line to stdout
+      sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+      "
+    }
+    
+    export -f taxdb_query
+    echo "Starting parallel processing..."
+    /usr/bin/env parallel --jobs $threads \
+    --joblog "${out}/taxonomy/taxdb_parallel.log" taxdb_query :::: "${out}/taxonomy/hits.taxid.tsv" >> "${out}/taxonomy/hits.lineage.tsv"
+    
+    #while IFS=$'\t' read -r taxid; do
+    #  echo "running taxonomic id ${taxid} (${counter} / ${total})"
+    #  ((counter++))
+    #
+    #  singularity exec --writable-tmpfs -e \
+    #  --no-home -B "${tmp}:${tmp}" -B "${db}:${db}" -B "${out}:${out}" "${DICEY_SIF}" \
+    #  /bin/bash -c "
+    #  taxons=\$(perl /opt/taxdb/scripts/taxdb_query.pl --taxon \"${taxid}\" --mode lineage \"${db}/taxonomy_db.sqlite\");
+    #  intermediate_t=\$(echo \"\$taxons\" | sed \"s/'/'/g; s/\t/','/g\");
+    #
+    #  new_t=\"'\${intermediate_t}'\";
+    #
+    #  sqlite3 ${db}/taxonomy_db.sqlite \".separator '\t'\" \"select '${taxid}', group_concat(name_txt, ';') from (select name_txt from taxonomy where taxid in (\$new_t) order by rank_number asc);\"
+    #
+    #  " >> "${out}/taxonomy/hits.lineage.tsv"
+    #done < "${out}/taxonomy/hits.taxid.tsv"
+    echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
+    
+    # split header and reimport to db
+    echo "inserting lineage info to db"
+    perl -ne '
+    chomp($_);
+    my($taxid,$lineage) = split("\t",$_);
+    my($kingdom,$phylum,$class,$order,$family,$genus,$species) = split("\;",$lineage);
+    print "$taxid\t$kingdom\t$phylum\t$class\t$order\t$family\t$genus\t$species\t$lineage\n";
+    ' ${out}/taxonomy/hits.lineage.tsv > ${out}/taxonomy/hits.lineage.split.tsv
+    
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite "
+    drop table if exists taxo_lineage;
+    create table taxo_lineage (
+      taxid integer,
+      kingdom text,
+      phylum text,
+      class text,
+      t_order text,
+      family text,
+      genus text,
+      species text,
+      lineage text
+    );
+    "
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite '.separator "\t"' ".import ${out}/taxonomy/hits.lineage.split.tsv taxo_lineage"
+    
+    echo "generating TSV report: hits.lineage.byseq.tsv"
+    sqlite3 ${out}/envBarcodeMiner.results.sqlite  '.separator "\t"' '.header on' "
+    select
+      h.Seq,
+      group_concat(distinct t.kingdom) kingdom,
+      group_concat(distinct t.phylum) phylum,
+      group_concat(distinct t.class) class,
+      group_concat(distinct t.t_order) t_order,
+      group_concat(distinct t.family) family,
+      group_concat(distinct t.genus) genus,
+      group_concat(distinct t.species) species,
+      group_concat(distinct h.Chrom) accession
+    from hits_taxid h
+    join taxo_lineage t on h.taxid=t.taxid
+    group by 1;
+    " > ${out}/hits.lineage.byseq.tsv
+fi
 
 echo "generating FASTA with accessions: hits.lineage.fa"
 perl -ne '
