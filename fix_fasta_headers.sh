@@ -55,7 +55,7 @@ BEGIN {
         if (fields[i] != "") name_count++
     }
     
-    # Rule 3: Remove if fewer than 2 names
+    # Remove if fewer than 2 names
     if (name_count < 2) {
         in_removed = 1
         next  # Skip to next record, will be saved in removed file
@@ -64,7 +64,7 @@ BEGIN {
     # Count semicolons in entire header
     sc = gsub(/;/, ";", header)
     
-    # Rule 2 & 1: Ensure exactly 6 semicolons
+    # Ensure exactly 6 semicolons
     if (sc > 6) {
         # This shouldnt happen normally, but trim to 6 if it does
         # Remove trailing semicolons beyond 6
@@ -128,6 +128,14 @@ if [ $bad_count -eq 0 ]; then
 else
     echo -e "\n✗ Warning: $bad_count headers still don't have 6 semicolons!" | tee -a "$logfile"
 fi
+
+# manual taxonomy curation: 
+# - some headers have errors in fungi
+
+
+# - some have a comma out of nowhere
+# Some unknown species have an sp. XXX at higher levels, we remove those 
+
 
 echo -e "\nOutput files:" | tee -a "$logfile"
 echo "Cleaned: $clean_output" | tee -a "$logfile"
