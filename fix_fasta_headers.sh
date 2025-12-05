@@ -15,12 +15,40 @@ clean_output="$out_dir/${filename%.*}_clean.fasta"
 removed_output="$out_dir/cleanup/${filename%.*}_removed.fasta"
 logfile="$out_dir/cleanup/${filename%.*}_fix.log"
 
+# manual taxonomy curation: 
+# - some headers have errors in fungi
+# - some have a comma out of nowhere
+# Some unknown species have an sp. XXX at higher levels, we remove those names too
+sed -E '
+  # Remove commas
+  s|,||g;
+  
+  # Combine fungal taxonomy fixes (order matters!)
+  s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|;
+  s|Fungi;(Mucoromycota;)?Glomerales|Fungi;Mucuromycota;Glomeromycetes;Glomerales|;
+  s|Fungi;Glomeromycetes|Fungi;Mucoromycota;Glomeromycetes|;
+  
+  # Remove uncultured prefix
+  s|uncultured ||g;
+  
+  # Remove everything after first space (some species names, we are working at genus lev)
+  s| .*||;
+  
+  # Keep only first 6 semicolon-delimited fields
+  s/(([^;]*;){5}[^;]*).*/\1/;
+  
+  # Remove "fungal" or "fungus" anywhere
+  s/fungal|fungus//g
+' $input > tmp.fa
+
+input=tmp.fa
+
 > "$clean_output"
 > "$removed_output"
 
 echo "Processing $filename..." | tee "$logfile"
 
-# Process the FASTA file
+# Processing to ensure 6 semicolons regardless of taxa names
 awk -v removed="$removed_output" '
 BEGIN {
     seq_buffer = ""
@@ -128,15 +156,7 @@ if [ $bad_count -eq 0 ]; then
 else
     echo -e "\n✗ Warning: $bad_count headers still don't have 6 semicolons!" | tee -a "$logfile"
 fi
-
-# manual taxonomy curation: 
-# - some headers have errors in fungi
-
-
-# - some have a comma out of nowhere
-# Some unknown species have an sp. XXX at higher levels, we remove those 
-
-
+rm tmp.fa
 echo -e "\nOutput files:" | tee -a "$logfile"
 echo "Cleaned: $clean_output" | tee -a "$logfile"
 echo "Removed: $removed_output" | tee -a "$logfile"
