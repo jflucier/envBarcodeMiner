@@ -23,10 +23,37 @@ sed -E '
   # Remove commas
   s|,||g;
   
+  # Manual Fix missing kingdoms
+  # found using grep "," AML2_WANDA_db_Genus.fa | awk -F";"" "{print $1, $2}"
+  s|>Actinopteri,|>Metazoa;Chordata;Actinopteri;|g;
+  s|>Annelida,;|>Metazoa;Annelida;|g;
+  s|>Arthropoda,;|>Metazoa;Arthropoda;|g;
+  s|>Chordata,;|>Metazoa;Chordata;|g;
+  s|>Cnidaria,;|>Metazoa;Cnidaria;|g;
+  s|>Fungi;Archaeosporales,;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
+  s|>Fungi;Paraglomerales,;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
+  s|Opiliones;Euepedanus,|Opiliones;Epedanidae;Euepedanus;|g;
+  s|Opiliones;Icaleptes|Opiliones;Icaleptidae;Icaleptes|g;
+  s|Opiliones;Pellobunus,;|Opiliones;Samoidae;Pellobunus,;|g;
+  s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a,|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a,|g;
+  s|Trombidiformes;Cocceupodes|Trombidiformes;Cocceupodidae;Cocceupodes|g;
+  s|Trombidiformes;Mideopsis|Trombidiformes;Mideopsidae;Mideopsis|g;
+  s|>Metazoa;Catenulida,|>Metazoa;Platyhelminthes;Catenulida,|g;
+  s|>Metazoa;Clitellata,;|>Metazoa;Annelida;Clitellata,;|g;
+  s|Actiniaria;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
+  s|>Metazoa;Metachromadora,|>Metazoa;Nematoda;Chromadorea;Desmodorida;Desmodoridae;Metachromadora;|g;
+  s|>Mollusca,;|>Metazoa;Mollusca;|g;
+  s|>Nematoda,;|>Metazoa;Nematoda;|g;
+  s|>Centroplasthelida;|>Haptista;Centroplasthelida;|g;
+  s|>Pterocystida,;|>Haptista;Centroplasthelida;Pterocystida;|g;
+  s|>Pterocystis,;|>Haptista;Centroplasthelida;Pterocystida;Pterocystidae;Pterocystis;|g;
+  s|>Rhodophyta;|>Archaeplastida;Archaeplastida;|g;
+  s|>Rotifera,;|>Metazoa;Rotifera;|g;
+  
   # Combine fungal taxonomy fixes (order matters!)
-  s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|;
-  s|Fungi;(Mucoromycota;)?Glomerales|Fungi;Mucoromycota;Glomeromycetes;Glomerales|;
-  s|Fungi;Glomeromycetes|Fungi;Mucoromycota;Glomeromycetes|;
+  s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|g;
+  s|Fungi;(Mucoromycota;)?Glomerales|Fungi;Mucoromycota;Glomeromycetes;Glomerales|g;
+  s|Fungi;Glomeromycetes|Fungi;Mucoromycota;Glomeromycetes|g;
   
   # Remove uncultured prefix
   s|uncultured ||g;
