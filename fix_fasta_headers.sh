@@ -22,7 +22,6 @@ logfile="$out_dir/cleanup/${filename%.*}_fix.log"
 sed -E '
   # Remove commas
   s|,||g;
-  
   # Manual Fix missing kingdoms
   # found using grep "," AML2_WANDA_db_Genus.fa | awk -F";"" "{print $1, $2}"
   # some are arbitrary superior clade names to ensure lower taxonomic level consistency
@@ -38,7 +37,7 @@ sed -E '
   s|>Chordata;|>Metazoa;Chordata;|g;
   s|>Cercozoa;|>Rhizaria;Cercozoa;|g;
   s|>Centroplasthelida;|>Haptista;Centroplasthelida;|g;
-  s|>Choanoflagellata;|>Podiata;|Holozoa;Choanoflagellata;|g;
+  s|>Choanoflagellata;|>Podiata;Holozoa;Choanoflagellata;|g;
   s|>Chordata;|>Metazoa;Chordata;|g;
   s|>Cnidaria;|>Metazoa;Cnidaria;|g;
   s|>Ciliophora;|>Alveolata;Ciliophora;|g;
@@ -62,7 +61,7 @@ sed -E '
   s|>Metazoa;Metachromadora|>Metazoa;Nematoda;Chromadorea;Desmodorida;Desmodoridae;Metachromadora;|g;
   s|>Mollusca;|>Metazoa;Mollusca;|g;
   s|>Nematoda;|>Metazoa;Nematoda;|g;
- s|Opiliones;Euepedanus;|Opiliones;Epedanidae;Euepedanus;|g;
+  s|Opiliones;Euepedanus;|Opiliones;Epedanidae;Euepedanus;|g;
   s|Opiliones;Icaleptes|Opiliones;Icaleptidae;Icaleptes|g;
   s|Opiliones;Pellobunus;|Opiliones;Samoidae;Pellobunus;|g;
   s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a|g;
