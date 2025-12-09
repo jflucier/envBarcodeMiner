@@ -70,7 +70,7 @@ sed -E '
   s|>Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
   s|>Pterocystis;|>Chromista;Heliozoa;Centrohelea;Pterocystida;Pterocystidae;Pterocystis;|g;
   s|>Rotifera;|>Metazoa;Rotifera;|g;
-  s|>Vitrellaceae;|>Alveolata;Chomerida;Colpodellophyceae;Colpodellida;Vitrellaceae;|g;
+  s|>Vitrellaceae;|>Alveolata;Chromerida;Colpodellophyceae;Colpodellida;Vitrellaceae;|g;
   
   # Combine fungal taxonomy fixes (order matters!)
   s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|g;
