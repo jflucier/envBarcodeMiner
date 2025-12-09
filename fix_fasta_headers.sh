@@ -25,30 +25,53 @@ sed -E '
   
   # Manual Fix missing kingdoms
   # found using grep "," AML2_WANDA_db_Genus.fa | awk -F";"" "{print $1, $2}"
-  s|>Actinopteri,|>Metazoa;Chordata;Actinopteri;|g;
-  s|>Annelida,;|>Metazoa;Annelida;|g;
-  s|>Arthropoda,;|>Metazoa;Arthropoda;|g;
-  s|>Chordata,;|>Metazoa;Chordata;|g;
-  s|>Cnidaria,;|>Metazoa;Cnidaria;|g;
-  s|>Fungi;Archaeosporales,;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
-  s|>Fungi;Paraglomerales,;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
-  s|Opiliones;Euepedanus,|Opiliones;Epedanidae;Euepedanus;|g;
+  # some are arbitrary superior clade names to ensure lower taxonomic level consistency
+  s|>Actinopteri|>Metazoa;Chordata;Actinopteri;|g;
+  s|>Apicomplexa|>Alveolata;Apicomplexa|g;
+  s|>Annelida;|>Metazoa;Annelida;|g;
+  s|>Arthropoda;|>Metazoa;Arthropoda;|g;
+  s|Actiniaria;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
+  s|>Apicomplexa;|>Alveolata;Apicomplexa;|g;
+  s|>Bacillariophyta;|>Ochrophyta;Bacillariophyta;|g;
+  s|Bacillati|Bacteria|g;
+  s|>Bigyra|>Stramenopiles;Bigyra|g;
+  s|>Chordata;|>Metazoa;Chordata;|g;
+  s|>Cercozoa;|>Rhizaria;Cercozoa;|g;
+  s|>Centroplasthelida;|>Haptista;Centroplasthelida;|g;
+  s|>Choanoflagellata;|>Podiata;|Holozoa;Choanoflagellata;|g;
+  s|>Chordata;|>Metazoa;Chordata;|g;
+  s|>Cnidaria;|>Metazoa;Cnidaria;|g;
+  s|>Ciliophora;|>Alveolata;Ciliophora;|g;
+  s|>Colpodellaceae;|>Alveolata;Chromerida;Colpodellophyceae;Colpodellida;Colpodellaceae;|g;
+  s|>Dinophyceae;|>Alveolata;Dinoflagellata;Dinophyceae;|g;
+  s|>Evosea;Eumycetozoa;Trichiida;|>Podiata;Amoebozoa;Myxogastria;Trichiida;|g;
+  s|>Fungi;Archaeosporales;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
+  s|>Fungi;Paraglomerales;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
+  s|>Glaucocystophyceae;|>Archaeplastida;Glaucophyta;Glaucocystophyceae;|g;
+  s|>Haptista;Centroplasthelida;Acanthocystida;|>Chromista;Heliozoa;Centrohelea;Acanthocystida|g;
+  s|>Haptista;Centroplasthelida;Meringosphaera;|>Chromista;Ochrophyta;Xanthophyceae;Mischococcales;Pleurochloridaceae;Meringosphaera;|g;
+  s|>Haptista;Centroplasthelida;Pseudoraphidiophrys;|>Chromista;Heliozoa;Centrohelea;Centrohelida;Raphidiophryidae;Pseudoraphidiophrys;|g;
+  s|>Haptista;Centroplasthelida;Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
+  s|>Haptista;Centroplasthelida;Spiculophrys|>Chromista;Heliozoa;Centroplasthelida;Centroplasthelida;Spiculophryidae;Spiculophrys|g;
+  s|>Haptista;Centroplasthelida;Yogsothothidae;|>Chromista;Heliozoa;Centroplasthelida;Chthonida;Yogsothothidae;|g;
+  s|>Haptophyta;Haptophyta;|>Chromista;Haptophyta;|g;
+  s|>Jakobida;|>Protozoa;Loukozoa;Jakobea;Jakobida;|g;
+  s|>Preaxostyla;|>Metamonada;Preaxostyla|g;
+  s|>Metazoa;Catenulida|>Metazoa;Platyhelminthes;Catenulida|g;
+  s|>Metazoa;Clitellata;|>Metazoa;Annelida;Clitellata;|g;
+  s|>Metazoa;Metachromadora|>Metazoa;Nematoda;Chromadorea;Desmodorida;Desmodoridae;Metachromadora;|g;
+  s|>Mollusca;|>Metazoa;Mollusca;|g;
+  s|>Nematoda;|>Metazoa;Nematoda;|g;
+ s|Opiliones;Euepedanus;|Opiliones;Epedanidae;Euepedanus;|g;
   s|Opiliones;Icaleptes|Opiliones;Icaleptidae;Icaleptes|g;
-  s|Opiliones;Pellobunus,;|Opiliones;Samoidae;Pellobunus,;|g;
-  s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a,|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a,|g;
+  s|Opiliones;Pellobunus;|Opiliones;Samoidae;Pellobunus;|g;
+  s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a|g;
   s|Trombidiformes;Cocceupodes|Trombidiformes;Cocceupodidae;Cocceupodes|g;
   s|Trombidiformes;Mideopsis|Trombidiformes;Mideopsidae;Mideopsis|g;
-  s|>Metazoa;Catenulida,|>Metazoa;Platyhelminthes;Catenulida,|g;
-  s|>Metazoa;Clitellata,;|>Metazoa;Annelida;Clitellata,;|g;
-  s|Actiniaria;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
-  s|>Metazoa;Metachromadora,|>Metazoa;Nematoda;Chromadorea;Desmodorida;Desmodoridae;Metachromadora;|g;
-  s|>Mollusca,;|>Metazoa;Mollusca;|g;
-  s|>Nematoda,;|>Metazoa;Nematoda;|g;
-  s|>Centroplasthelida;|>Haptista;Centroplasthelida;|g;
-  s|>Pterocystida,;|>Haptista;Centroplasthelida;Pterocystida;|g;
-  s|>Pterocystis,;|>Haptista;Centroplasthelida;Pterocystida;Pterocystidae;Pterocystis;|g;
-  s|>Rhodophyta;|>Archaeplastida;Archaeplastida;|g;
-  s|>Rotifera,;|>Metazoa;Rotifera;|g;
+  s|>Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
+  s|>Pterocystis;|>Chromista;Heliozoa;Centrohelea;Pterocystida;Pterocystidae;Pterocystis;|g;
+  s|>Rotifera;|>Metazoa;Rotifera;|g;
+  s|>Vitrellaceae;|>Alveolata;Chomerida;Colpodellophyceae;Colpodellida;Vitrellaceae;|g;
   
   # Combine fungal taxonomy fixes (order matters!)
   s|Fungi;(Glomerales;Glomeraceae)|Fungi;Mucoromycota;Glomeromycetes;\1|g;
