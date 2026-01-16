@@ -82,8 +82,8 @@ sed -E '
   s|uncultured glomeraceous AM fungus||g;
   
   # Replace Glomeromycotina by Glomeromycetes
-  s|>Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
-  s|>Fungi;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
+  s|Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
+  s|Fungi;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
   
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
@@ -199,8 +199,8 @@ echo "Removed headers: $removed_headers" | tee -a "$logfile"
 
 # List some examples of removed sequences
 if [ $removed_headers -gt 0 ]; then
-    echo -e "\nExamples of removed headers:" | tee -a "$logfile"
-    grep '^>' "$removed_output" | head -20 | tee -a "$logfile"
+    echo -e "\nRemoved headers:" | tee -a "$logfile"
+    grep '^>' "$removed_output" | tee -a "$logfile"
 fi
 
 # Verify all cleaned headers have 6 semicolons
