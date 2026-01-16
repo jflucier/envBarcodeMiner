@@ -13,6 +13,7 @@ out_dir=$(dirname $PWD/$input)
 mkdir -p $out_dir/cleanup
 clean_output="$out_dir/${filename%.*}_clean.fasta"
 removed_output="$out_dir/cleanup/${filename%.*}_removed.fasta"
+genus_only_output="$out_dir/${filename%.*}_clean_genusOnly.fasta""
 logfile="$out_dir/cleanup/${filename%.*}_fix.log"
 
 # manual taxonomy curation: 
@@ -47,7 +48,7 @@ sed -E '
   s|>Fungi;Archaeosporales;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
   s|>Fungi;Paraglomerales;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
   s|>Glaucocystophyceae;|>Archaeplastida;Glaucophyta;Glaucocystophyceae;|g;
-  s|>Haptista;Centroplasthelida;Acanthocystida;|>Chromista;Heliozoa;Centrohelea;Acanthocystida|g;
+  s|>Haptista;Centroplasthelida;Acanthocystida;|>Chromista;Heliozoa;Centrohelea;Acanthocystida;|g;
   s|>Haptista;Centroplasthelida;Meringosphaera;|>Chromista;Ochrophyta;Xanthophyceae;Mischococcales;Pleurochloridaceae;Meringosphaera;|g;
   s|>Haptista;Centroplasthelida;Pseudoraphidiophrys;|>Chromista;Heliozoa;Centrohelea;Centrohelida;Raphidiophryidae;Pseudoraphidiophrys;|g;
   s|>Haptista;Centroplasthelida;Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
@@ -186,6 +187,25 @@ END {
     }
 }
 ' "$input" > "$clean_output"
+
+> "$genus_only_output"
+awk '
+/^>/ {
+    header = $0
+    # Check if header has missing taxa (consecutive semicolons)
+    if (header ~ /;;/) {
+        skip = 1
+    } else {
+        skip = 0
+        print header
+    }
+    next
+}
+!skip {
+    print
+}
+' "$clean_output" > "$genus_only_output"
+
 
 # Count results
 total_headers=$(grep -c '^>' "$input")
