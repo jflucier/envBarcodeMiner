@@ -198,7 +198,7 @@ echo "Cleaned headers: $clean_headers" | tee -a "$logfile"
 echo "Removed headers: $removed_headers" | tee -a "$logfile"
 
 # List some examples of removed sequences
-unique_removed_output=$(cat $removed_output | sort -u)
+unique_removed_output=$(sort -u "$removed_output")
 if [ $removed_headers -gt 0 ]; then
     echo -e "\nRemoved headers:" | tee -a "$logfile"
     grep '^>' "$unique_removed_output" | tee -a "$logfile"
