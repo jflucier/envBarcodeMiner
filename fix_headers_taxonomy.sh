@@ -13,7 +13,7 @@ out_dir=$(dirname $PWD/$input)
 mkdir -p $out_dir/cleanup
 clean_output="$out_dir/${filename%.*}_clean.fasta"
 removed_output="$out_dir/cleanup/${filename%.*}_removed.fasta"
-genus_only_output="$out_dir/${filename%.*}_clean_genusOnly.fasta""
+genus_only_output="$out_dir/${filename%.*}_clean_genusOnly.fasta"
 logfile="$out_dir/cleanup/${filename%.*}_fix.log"
 
 # manual taxonomy curation: 
