@@ -198,10 +198,9 @@ echo "Cleaned headers: $clean_headers" | tee -a "$logfile"
 echo "Removed headers: $removed_headers" | tee -a "$logfile"
 
 # List some examples of removed sequences
-unique_removed_output=$(sort -u "$removed_output")
 if [ $removed_headers -gt 0 ]; then
-    echo -e "\nRemoved headers:" | tee -a "$logfile"
-    grep '^>' "$unique_removed_output" | tee -a "$logfile"
+    echo -e "\nExamples of removed headers:" | tee -a "$logfile"
+    grep '^>' "$removed_output" | sort -u | tee -a "$logfile"
 fi
 
 # Verify all cleaned headers have 6 semicolons
