@@ -25,8 +25,6 @@ sed -E '
   # Manual Fix missing kingdoms
   # found using grep "," AML2_WANDA_db_Genus.fa | awk -F";"" "{print $1, $2}"
   # some are arbitrary superior clade names to ensure lower taxonomic level consistency
-  s|>Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
-  s|>Fungi;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
   s|>Actinopteri|>Metazoa;Chordata;Actinopteri;|g;
   s|>Apicomplexa|>Alveolata;Apicomplexa|g;
   s|>Annelida;|>Metazoa;Annelida;|g;
@@ -82,6 +80,10 @@ sed -E '
   # Remove uncultured prefix
   s|uncultured ||g;
   s|uncultured glomeraceous AM fungus||g;
+  
+  # Replace Glomeromycotina by Glomeromycetes
+  s|>Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
+  s|>Fungi;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
   
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
