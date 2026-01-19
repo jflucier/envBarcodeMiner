@@ -109,6 +109,7 @@ sed -E '
   s|Liliaceae;Fritillaria|Liliaceae;Fritillaria_Streptophyta|g;
   s|Odontellidae;Odontella|Odontellidae;Odontella_Arthropoda|g;
   s|Rissoellaceae;Rissoella|Rissoellaceae;Rissoella_Rhodophyta|g;
+  s|Amphidiniopsidaceae;Herdmania|Amphidiniopsidaceae;Herdmania_Dinoflagellata|g;
   
   # Remove "fungal" or "fungus" anywhere
   s/fungal|fungus//g
