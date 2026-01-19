@@ -36,7 +36,6 @@ sed -E '
   s|>Arthropoda;|>Metazoa;Arthropoda;|g;
   s|Actiniaria;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
   s|Actiniaria;Actinostolidae;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
-  s|>Apicomplexa;|>Alveolata;Apicomplexa;|g;
   s|>Bacillariophyta;|>Ochrophyta;Bacillariophyta;|g;
   s|Bacillati|Bacteria|g;
   s|>Bigyra|>Stramenopiles;Bigyra|g;
@@ -89,8 +88,9 @@ sed -E '
   s|Fungi;Glomeromycetes|Fungi;Mucoromycota;Glomeromycetes|g;
   
   # Remove uncultured prefix
-  s|uncultured ||g;
   s|uncultured glomeraceous AM fungus||g;
+  s|uncultured Eimeriidae||g;
+  s|uncultured ||g;
   
   # Replace Glomeromycotina by Glomeromycetes
   s|Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
