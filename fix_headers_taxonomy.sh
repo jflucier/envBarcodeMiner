@@ -23,6 +23,10 @@ logfile="$out_dir/cleanup/${filename%.*}_fix.log"
 sed -E '
   # Remove commas
   s|,||g;
+  
+  # Remove cf. 
+  s|cf. ||g;
+  
   # Manual Fix missing kingdoms
   # found using grep "," AML2_WANDA_db_Genus.fa | awk -F";"" "{print $1, $2}"
   # some are arbitrary superior clade names to ensure lower taxonomic level consistency
@@ -31,6 +35,7 @@ sed -E '
   s|>Annelida;|>Metazoa;Annelida;|g;
   s|>Arthropoda;|>Metazoa;Arthropoda;|g;
   s|Actiniaria;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
+  s|Actiniaria;Actinostolidae;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
   s|>Apicomplexa;|>Alveolata;Apicomplexa;|g;
   s|>Bacillariophyta;|>Ochrophyta;Bacillariophyta;|g;
   s|Bacillati|Bacteria|g;
@@ -42,15 +47,18 @@ sed -E '
   s|>Chordata;|>Metazoa;Chordata;|g;
   s|>Cnidaria;|>Metazoa;Cnidaria;|g;
   s|>Ciliophora;|>Alveolata;Ciliophora;|g;
+  s|Cyclopoida;Lamproglena|Cyclopoida;Lernaeidae;Lamproglena|g;
   s|>Colpodellaceae;|>Alveolata;Chromerida;Colpodellophyceae;Colpodellida;Colpodellaceae;|g;
   s|>Dinophyceae;|>Alveolata;Dinoflagellata;Dinophyceae;|g;
+  s|Entomobryomorpha;Orchesella|Entomobryomorpha;Orchesellidae;Orchesella|g;
+  s|>Fungi;Mucoromycota;Diversisporales|>Fungi;Mucoromycota;Glomeromycetes;Diversisporales|g;
   s|>Evosea;Eumycetozoa;Trichiida;|>Podiata;Amoebozoa;Myxogastria;Trichiida;|g;
   s|>Fungi;Archaeosporales;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
   s|>Fungi;Paraglomerales;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
   s|>Glaucocystophyceae;|>Archaeplastida;Glaucophyta;Glaucocystophyceae;|g;
   s|>Haptista;Centroplasthelida;Acanthocystida;|>Chromista;Heliozoa;Centrohelea;Acanthocystida;|g;
   s|>Haptista;Centroplasthelida;Meringosphaera;|>Chromista;Ochrophyta;Xanthophyceae;Mischococcales;Pleurochloridaceae;Meringosphaera;|g;
-  s|>Haptista;Centroplasthelida;Pseudoraphidiophrys;|>Chromista;Heliozoa;Centrohelea;Centrohelida;Raphidiophryidae;Pseudoraphidiophrys;|g;
+  s|>Haptista;Centroplasthelida;Pseudoraphidiophrys;|>Chromista;Heliozoa;Centrohelea;Pterocystida;Raphidiophryidae;Pseudoraphidiophrys;|g;
   s|>Haptista;Centroplasthelida;Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
   s|>Haptista;Centroplasthelida;Spiculophrys|>Chromista;Heliozoa;Centroplasthelida;Centroplasthelida;Spiculophryidae;Spiculophrys|g;
   s|>Haptista;Centroplasthelida;Yogsothothidae;|>Chromista;Heliozoa;Centroplasthelida;Chthonida;Yogsothothidae;|g;
@@ -65,6 +73,8 @@ sed -E '
   s|Opiliones;Euepedanus;|Opiliones;Epedanidae;Euepedanus;|g;
   s|Opiliones;Icaleptes|Opiliones;Icaleptidae;Icaleptes|g;
   s|Opiliones;Pellobunus;|Opiliones;Samoidae;Pellobunus;|g;
+  s|>Rhodophyta|>Archaeplastida;Rhodophyta|g;
+  s|Florideophyceae;Sporolithaceae|Florideophyceae;Sporolithales;Sporolithaceae|g;
   s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a|g;
   s|Trombidiformes;Cocceupodes|Trombidiformes;Cocceupodidae;Cocceupodes|g;
   s|Trombidiformes;Mideopsis|Trombidiformes;Mideopsidae;Mideopsis|g;
@@ -86,11 +96,19 @@ sed -E '
   s|Fungi;Mucoromycota;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
   s|Fungi;Glomeromycotina|Fungi;Mucoromycota;Glomeromycetes|g;
   
+  # Keep only first 6 semicolon-delimited fields
+  s/(([^;]*;){5}[^;]*).*/\1/;
+  
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
   
-  # Keep only first 6 semicolon-delimited fields
-  s/(([^;]*;){5}[^;]*).*/\1/;
+  # Dumontia exists both in Arthropoda and Rhodophyta, append the arthropode with something unique
+  s|Dumontiidae;Dumontia|Dumontiidae;Dumontia_Arthropoda|g;
+  
+  # Other duplicate genera names:
+  s|Liliaceae;Fritillaria|Liliaceae;Fritillaria_Streptophyta|g;
+  s|Odontellidae;Odontella|Odontellidae;Odontella_Arthropoda|g;
+  s|Rissoellaceae;Rissoella|Rissoellaceae;Rissoella_Rhodophyta|g;
   
   # Remove "fungal" or "fungus" anywhere
   s/fungal|fungus//g
