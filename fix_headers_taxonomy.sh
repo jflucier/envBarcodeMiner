@@ -89,6 +89,7 @@ sed -E '
   
   # Remove uncultured prefix
   s|uncultured glomeraceous AM fungus||g;
+  s|uncultured Acaulosporaceae||g;
   s|uncultured Eimeriidae||g;
   s|uncultured ||g;
   
