@@ -139,7 +139,7 @@ process_index() {
   rm "${tmp}/${FA}"*
 }
 
-if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
+if [[ ! -f ${out}/dicey/dicey_results.acc.tsv ]]; then
     
     TOTAL_INDEX=$(ls ${fa_list}/*.fm9 | wc -l)
     echo "will run dicey search on ${TOTAL_INDEX} indexes using ${threads} threads"
@@ -180,8 +180,7 @@ if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
     else
       echo "Dicey search done sucessfully!"
     fi
-    
-    echo "combine all dicey results in ${out}/dicey_results.tsv"
+       echo "combine all dicey results in ${out}/dicey_results.tsv"
     cat ${out}/dicey/part/*.tsv > ${out}/dicey/dicey_results.tsv
     
     echo "trim hits accession version from all hits"
@@ -198,7 +197,9 @@ if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
       print join("\t",@t) . "\n";
     }
     ' ${out}/dicey/dicey_results.tsv > ${out}/dicey/dicey_results.acc.tsv
-    
+ 
+fi
+
     echo "Initialise envBarcodeMiner result db with dicey hits"
     sqlite3 ${out}/envBarcodeMiner.results.sqlite "
     drop table if exists hits;
@@ -243,7 +244,6 @@ if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
       hits h
       join taxo.accession2taxid a on h.Chrom=a.\"accession\";
     "
-fi
 
 if [[ ! -f ${out}/hits.lineage.byseq.tsv ]]; then
     echo "Generate dicey hits TSV report: hits.taxid.tsv"
