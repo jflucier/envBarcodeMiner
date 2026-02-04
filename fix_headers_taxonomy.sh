@@ -38,22 +38,29 @@ sed -E '
   s|Actiniaria;Actinostolidae;Sicyonis|Actiniaria;Sicyonidae;Sicyonis;Sicyonis|g;
   s|>Bacillariophyta;|>Ochrophyta;Bacillariophyta;|g;
   s|Bacillati|Bacteria|g;
+  s|Basidiomycota;Agaricales|Basidiomycota;Agaricomycetes;Agaricales|g;
   s|>Bigyra|>Stramenopiles;Bigyra|g;
   s|>Chordata;|>Metazoa;Chordata;|g;
   s|>Cercozoa;|>Rhizaria;Cercozoa;|g;
   s|>Centroplasthelida;|>Haptista;Centroplasthelida;|g;
   s|>Choanoflagellata;|>Podiata;Holozoa;Choanoflagellata;|g;
+  s|>Chlorophyta|>Viridiplantae;Chlorophyta|g;
   s|>Chordata;|>Metazoa;Chordata;|g;
   s|>Cnidaria;|>Metazoa;Cnidaria;|g;
   s|>Ciliophora;|>Alveolata;Ciliophora;|g;
+  s|Ciliophora;Prorodontida|Ciliophora;Prostomatea;Prorodontida|g;
   s|Cyclopoida;Lamproglena|Cyclopoida;Lernaeidae;Lamproglena|g;
   s|>Colpodellaceae;|>Alveolata;Chromerida;Colpodellophyceae;Colpodellida;Colpodellaceae;|g;
   s|>Dinophyceae;|>Alveolata;Dinoflagellata;Dinophyceae;|g;
+  s|Dinophyceae;Amphidomataceae|Dinophyceae;Gonyaulacales;Amphidomataceae|g;
   s|Entomobryomorpha;Orchesella|Entomobryomorpha;Orchesellidae;Orchesella|g;
-  s|>Fungi;Mucoromycota;Diversisporales|>Fungi;Mucoromycota;Glomeromycetes;Diversisporales|g;
   s|>Evosea;Eumycetozoa;Trichiida;|>Podiata;Amoebozoa;Myxogastria;Trichiida;|g;
+  s|>Fungi;Mucoromycota;Diversisporales|>Fungi;Mucoromycota;Glomeromycetes;Diversisporales|g;
+  s|Fragilariophyceae;Fragilariales;Fragilariaceae;Ardissonea|Mediophyceae;Ardissoneales;Ardissoneaceae;Ardissonea|g;
   s|>Fungi;Archaeosporales;|>Fungi;Mucoromycota;Glomeromycetes;Archaeosporales;|g;
+  s|>Fungi;Eurotiomycetes|Fungi;Ascomycota;Eurotiomycetes|g;
   s|>Fungi;Paraglomerales;|>Fungi;Mucoromycota;Glomeromycetes;Paraglomerales;|g;
+  s|>Fungi;Pichiomycetes|>Fungi;Ascomycota;Pichiomycetes|g;
   s|>Glaucocystophyceae;|>Archaeplastida;Glaucophyta;Glaucocystophyceae;|g;
   s|>Haptista;Centroplasthelida;Acanthocystida;|>Chromista;Heliozoa;Centrohelea;Acanthocystida;|g;
   s|>Haptista;Centroplasthelida;Meringosphaera;|>Chromista;Ochrophyta;Xanthophyceae;Mischococcales;Pleurochloridaceae;Meringosphaera;|g;
@@ -75,6 +82,7 @@ sed -E '
   s|>Rhodophyta|>Archaeplastida;Rhodophyta|g;
   s|Florideophyceae;Sporolithaceae|Florideophyceae;Sporolithales;Sporolithaceae|g;
   s|Sclerosomatidae;Leiobunum sp. 1 KTDT-2024a|Sclerosomatidae;Leiobunum;Leiobunum sp. 1 KTDT-2024a|g;
+  s|Trebouxiophyceae;Chlorellaceae|Trebouxiophyceae;Chlorellales;Chlorellaceae|g;
   s|Trombidiformes;Cocceupodes|Trombidiformes;Cocceupodidae;Cocceupodes|g;
   s|Trombidiformes;Mideopsis|Trombidiformes;Mideopsidae;Mideopsis|g;
   s|>Pterocystida;|>Chromista;Heliozoa;Centrohelea;Pterocystida;|g;
@@ -100,6 +108,9 @@ sed -E '
   # Keep only first 6 semicolon-delimited fields
   s/(([^;]*;){5}[^;]*).*/\1/;
   
+  # Special cases where the species is the pattern "Phylum symbiont of Some species"
+  s| symbiont of \([a-zA-Z]*\) \([a-zA-Z]*\)|_symbiont_of_\1_\2|g;
+  
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
   
@@ -107,10 +118,15 @@ sed -E '
   s|Dumontiidae;Dumontia|Dumontiidae;Dumontia_Arthropoda|g;
   
   # Other duplicate genera names:
-  s|Liliaceae;Fritillaria|Liliaceae;Fritillaria_Streptophyta|g;
-  s|Odontellidae;Odontella|Odontellidae;Odontella_Arthropoda|g;
-  s|Rissoellaceae;Rissoella|Rissoellaceae;Rissoella_Rhodophyta|g;
-  s|Amphidiniopsidaceae;Herdmania|Amphidiniopsidaceae;Herdmania_Dinoflagellata|g;
+  s|Terebellidae;Biremis|Terebellidae;Biremis__Annelida|g;
+  s|Sparidae;Calamus|Sparidae;Calamus__Chordata|g;
+  s|Carabidae;Antennaria|Carabidae;Antennaria__Arthropoda|g;
+  s|Liliaceae;Fritillaria|Liliaceae;Fritillaria__Streptophyta|g;
+  s|Odontellidae;Odontella|Odontellidae;Odontella__Arthropoda|g;
+  s|Pyrgomorphidae;Atractomorpha|Pyrgomorphidae;Atractomorpha__Arthropoda|g;
+  s|Rissoellaceae;Rissoella|Rissoellaceae;Rissoella__Rhodophyta|g;
+  s|Sarcoptiformes;Cepheidae|Sarcoptiformes;Cepheidae__Arthropoda|g;
+  s|Amphidiniopsidaceae;Herdmania|Amphidiniopsidaceae;Herdmania__Dinoflagellata|g;
   
   # Remove "fungal" or "fungus" anywhere
   s/fungal|fungus//g
@@ -254,4 +270,5 @@ rm tmp.fa
 echo -e "\nOutput files:" | tee -a "$logfile"
 echo "Cleaned: $clean_output" | tee -a "$logfile"
 echo "Removed: $removed_output" | tee -a "$logfile"
+echo "Genus only (for assignTaxonomy) : $genus_only_output" | tee -a "$logfile"
 echo "Log: $logfile" | tee -a "$logfile"
