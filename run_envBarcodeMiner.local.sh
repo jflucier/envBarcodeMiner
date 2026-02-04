@@ -290,7 +290,6 @@ if [[ ! -f ${out}/hits.lineage.byseq.tsv ]]; then
     /usr/bin/env parallel --jobs $threads \
     --joblog "${out}/taxonomy/taxdb_parallel.log" taxdb_query :::: "${out}/taxonomy/hits.taxid.tsv" >> "${out}/taxonomy/hits.lineage.tsv"
     
-    
     echo "Processing complete. Results in ${out}/taxonomy/hits.lineage.tsv"
     
     # split header and reimport to db

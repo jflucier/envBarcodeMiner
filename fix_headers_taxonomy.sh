@@ -9,7 +9,7 @@ fi
 
 input="$1"
 filename=$(basename "$input")
-out_dir=$(dirname $PWD/$input)
+out_dir=$(dirname $PWD/$filename)
 mkdir -p $out_dir/cleanup
 clean_output="$out_dir/${filename%.*}_clean.fasta"
 removed_output="$out_dir/cleanup/${filename%.*}_removed.fasta"
