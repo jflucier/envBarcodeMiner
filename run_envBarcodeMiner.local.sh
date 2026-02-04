@@ -139,7 +139,7 @@ process_index() {
   rm "${tmp}/${FA}"*
 }
 
-if [[ ! -f ${out}/envBarcodeMiner.results.sqlite ]]; then
+if [[ ! -f  ${out}/taxonomy/hits.taxid.tsv ]]; then
     
     TOTAL_INDEX=$(ls ${fa_list}/*.fm9 | wc -l)
     echo "will run dicey search on ${TOTAL_INDEX} indexes using ${threads} threads"
