@@ -109,7 +109,7 @@ sed -E '
   s/(([^;]*;){5}[^;]*).*/\1/;
   
   # Special cases where the species is the pattern "Phylum symbiont of Some species"
-  s| symbiont of \([a-zA-Z]*\) \([a-zA-Z]*\)|_symbiont_of_\1_\2|g;
+  s| symbiont of ([a-zA-Z]*) ([a-zA-Z]*)|_symbiont_of_\1_\2|g;
   
   # Remove everything after first space (some species names, we are working at genus lev)
   s| .*||;
