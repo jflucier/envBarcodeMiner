@@ -44,3 +44,22 @@ while read -r FWD REV; do
     nice sh $ENVBARCODEMINER_PATH/run_envBarcodeMiner.local.sh -t 36 -o $OUT_DIR -primer_f $FWD -primer_r $REV
 done < primer_pairs/all_primers.tsv
 ```
+
+### Resource benchmark (c-3t)
+Measures time, CPU-hours, peak memory and disk for: downloading the db, building the index, and one primer search.
+Three jobs on `c-3t` (internet access), each starting only if the previous one succeeded:
+
+| stage | what | CPUs | mem | time |
+|---|---|---|---|---|
+| `download` | taxonomy files + core_nt (single-threaded) | 1 | 8G | 3 d |
+| `db` | `install_db.sh -t 36` (skips downloads; sqlite, blastdbcmd, split, dicey index) | 36 | 750G | 7 d |
+| `run` | `run_envBarcodeMiner.local.sh -t 12`, ITS1F/ITS2 primers (above) | 12 | 250G | 3 d |
+
+```
+cd ${ENVBARCODEMINER_PATH}
+bash benchmark/submit_benchmark.sh           # all three (or e.g. `... db run` for a subset)
+bash benchmark/report.sh                     # once the jobs have ended
+```
+`report.sh` prints wall hours, CPU-hours used, CPU-hours allocated, peak memory (from `sacct`) and disk (`du` at the end of each job).
+Overrides: `DB_DIR` (default `./db`), `DB_THREADS`, `RUN_THREADS`, `CLEAN`, `PRIMER_F`, `PRIMER_R`.
+Logs: `benchmark/results/<stage>_<jobid>.out`.
