@@ -14,6 +14,7 @@ cd containers
 singularity build --force --fakeroot envBarcodeMiner.sif envBarcodeMiner.def
 ```
 ### setup db
+Requires ~2Tb of space. Downloads Core_nt and creates a dicey index. 
 ```
 cd ${ENVBARCODEMINER_PATH}
 sh install_db.sh
@@ -32,6 +33,10 @@ sh /fast/def-ilafores/envBarcodeMiner/run_envBarcodeMiner.local.sh -t 12 \
 ```
 
 ### Run with degenerate pairs
+Degenerate primers may be useful for some target sequences. These utility scripts generate every
+possible non-degenerate combinations from a given degenerate combination. Run a while loop to create
+a subdir by primer pair and execute the pipeline on each. Future development will integrate parallel
+execution of multiple runs.
 
 ```
 mkdir -p primer_pairs
